@@ -1,26 +1,41 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import {Container, Row, Col} from "react-bootstrap";
+import {List} from "./components/List";
+import {Header} from "./components/Header";
+import {ListContext, ListController} from './controllers/ListController';
+import {makeObservable, persist, proxy, serialize, useObservables} from "proxily";
+import {ToDoList, TodoListStyle} from "./store";
+import {StyleContext, StyleController} from "./controllers/StyleController";
+import {StyleUpdate} from "./components/StyleUpdate";
+
+//localStorage.setItem('root', serialize(new ToDoListItem()));  // Uncomment to clear the store
+//localStorage.setItem('style', serialize(new TodoListStyle()));  // Uncomment to clear the store
+
+const toDoList = persist(new ToDoList(), {key: 'root', classes: Object.values(require('./store'))});
+const toDoListStyle = persist(new TodoListStyle(), {key: 'style', classes: Object.values(require('./store'))});
+const styleController = makeObservable(new StyleController(toDoListStyle));
+const listController = makeObservable(new ListController(toDoList));
+
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    useObservables();
+    const {backgroundStyle} = styleController;
+    return (
+      <StyleContext.Provider value={styleController}>
+          <ListContext.Provider value={listController}>
+              <Container style={backgroundStyle} fluid>
+                  <Header />
+                  <Row style={{padding: 20}}>
+                      <Col>
+                          <List/>
+                      </Col>
+                  </Row>
+              </Container>
+          <StyleUpdate></StyleUpdate>
+          </ListContext.Provider>
+      </StyleContext.Provider>
+    );
 }
 
 export default App;
