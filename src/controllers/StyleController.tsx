@@ -1,6 +1,5 @@
-import {TodoListStyle} from "../store/TodoListStyle";
+import {TodoListStyle} from "../store";
 import React from "react";
-import {ListItemController} from "./ListItemController";
 
 export class StyleController {
     todoListStyle : TodoListStyle;

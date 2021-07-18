@@ -21,7 +21,7 @@ export class ListController {
     }
     filter = ListController.Filter.All;
 
-    setFilter (eventKey: any, event: Object) {
+    setFilter (eventKey: any, _event: Object) {
         this.filter = eventKey;
     }
     get filters () {return Object.keys(ListController.Filter)}
@@ -60,7 +60,7 @@ export class ListController {
     @memoize()
     get completedItems () { console.log("getCompletedItems");return this.toDoList.toDoListItems.filter(t => t.completed) }
 
-    todoCompletionChanged(item : ToDoListItem) {
+    todoCompletionChanged() {
         if (this.completedItems.length > 0) {
             this.showToast = true;
             scheduleTask(this.deleteCompletedItems, {interval: 5000}, takeLatest);

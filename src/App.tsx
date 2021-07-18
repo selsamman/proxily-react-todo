@@ -4,7 +4,7 @@ import {Container, Row, Col} from "react-bootstrap";
 import {List} from "./components/List";
 import {Header} from "./components/Header";
 import {ListContext, ListController} from './controllers/ListController';
-import {makeObservable, persist, proxy, serialize, useObservables} from "proxily";
+import {makeObservable, persist, useObservables} from "proxily";
 import {ToDoList, TodoListStyle} from "./store";
 import {StyleContext, StyleController} from "./controllers/StyleController";
 import {StyleUpdate} from "./components/StyleUpdate";
@@ -32,7 +32,7 @@ function App() {
                       </Col>
                   </Row>
               </Container>
-          <StyleUpdate></StyleUpdate>
+              <StyleUpdate/>
           </ListContext.Provider>
       </StyleContext.Provider>
     );

@@ -13,10 +13,12 @@ Note: Until Proxily is published on NPM you need to have it in an adacent folder
 # The Application
 This is a rather simple todo application - add Todo items and check them off when done.  However it has two additional features tha demonstrate some of the unique features Proxily has to offer:
 
-* When you check off a ToDo it is not immediately removed from the list.  Instead a popup (Toast) appears that tells you they will be deleted shortly (in 5 seconds) and that you can undo the completion.  As long as you check off more ToDo items for completion the time extends further.  This is implemented quite simply and effectively with Sagas.
+* When you check off a ToDo it is not immediately removed from the list.  Instead a popup (Toast) appears that tells you they will be deleted shortly (in 5 seconds) and that you can undo the completion.  As long as you check off more ToDo items for completion the time extends further.  This is implemented quite simply and effectively with Sagas which are a standard feature of Proxily.
 
 
-* There is a gear icon that let's you change colors and font sizes.  A preview is shown of the new style and when you are satisfied you can save or cancel changes.  These features are often implemented by taking snapshots of the state and restoring it.  In many applications that also communicate with the server in the background, this will not work since it would undo any changes received from the server.  With Proxily you need only fork the state with Transaction and the commit or roll it back.
+* There is a gear icon that lets you change colors and font sizes.  A preview is shown of the new style and when you are satisfied you can save or cancel changes.  These features are often implemented by taking snapshots of the state and restoring it.  In many applications that also communicate with the server in the background, this will not work since it would undo any changes received from the server.  With Proxily you need only fork the state with Transaction and the commit or roll it back.
+
+* The style dialog also implements an undo/redo by simply calling undo/redo on the transaction.
 
 # Usage Patterns Demonstrated
 
