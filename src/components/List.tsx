@@ -1,19 +1,11 @@
-import {proxy, useObservable, useObservables} from "proxily";
+import {makeObservable, useObservable, useObservables, ObservableProvider} from "proxily";
 import {Button, Card, ListGroup, Toast} from "react-bootstrap";
 import {ListItem} from "./ListItem";
-import {useContext, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {ListContext} from "../controllers/ListController";
 import {ListItemController, ListItemContext} from "../controllers/ListItemController";
 import {StyleContext} from "../controllers/StyleController";
 
-const ObservableContext = ({provider, value, children} : {provider : any, value : any , children: any}) => {
-    const [providerValue] = useState(() => proxy(typeof value === "function" ? value() : value));
-    return (
-        <provider.Provider value={providerValue}>
-            {children}
-        </provider.Provider>
-    )
-}
 export function List () {
     useObservables()
     const listController = useContext(ListContext);
@@ -22,17 +14,20 @@ export function List () {
     const {undoCompletedItems, completedItems, toDoList} = listController;
     const {toDoListItems} = toDoList;
     const [hasToast, setHasToast] = useObservable(listController.showToast);
+    setTimeout(()=>console.log('List next tick'), 0);
+    useEffect (() => {console.log('List use effect')}, []);
+
     return (
         <>
             <Card>
                 <ListGroup variant="flush">
                     {toDoListItems.map( (item, ix) =>
-                        <ObservableContext key={ix} provider={ListItemContext}
-                                           value={() => new ListItemController(listController, item)}>
+                        <ObservableProvider key={ix} context={ListItemContext} dependencies={[item]}
+                                            value={new ListItemController(listController, item)}>
                             <ListGroup.Item key={ix}  style={listItemContainerStyle}>
                                 <ListItem key={ix}/>
                             </ListGroup.Item>
-                        </ObservableContext>
+                        </ObservableProvider>
                     )}
                 </ListGroup>
             </Card>

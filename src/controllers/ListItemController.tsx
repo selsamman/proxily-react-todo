@@ -14,6 +14,7 @@ export class ListItemController {
 
     get selected () { return !this.listItem.completed && this.listController.isSelected(this.listItem);}
     select () { this.listController.selectItem(this.listItem);}
+    unselect() {this.listController.selectItem(undefined);}
 
     get title () { return this.listItem.title; }
     setTitle (title : string) { this.listItem.title = title;}

@@ -37,7 +37,7 @@ export class ListController {
     removeItem (item : ToDoListItem) {
         this.toDoList.deleteItem(item)
     }
-    selectItem(item : ToDoListItem) {
+    selectItem(item : ToDoListItem | undefined) {
         if (this.selectedItem && this.selectedItem !== item && !this.selectedItem.title)
             this.removeItem(this.selectedItem);
         if (item !== this.selectedItem)
@@ -66,7 +66,6 @@ export class ListController {
             scheduleTask(this.deleteCompletedItems, {interval: 5000}, takeLatest);
         } else {
             this.showToast = false;
-            cancelTask(this.deleteCompletedItems,  takeLatest);
         }
     }
 

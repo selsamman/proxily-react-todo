@@ -12,7 +12,7 @@ export class StyleController {
     get navbarBg () {
         return this.todoListStyle.navbarBg
     }
-    get navbarButtonVariant () {
+    get navbarButtonVariant () : string {
         return this.todoListStyle.navbarBg === 'dark' ? 'secondary' : 'outline';
     }
     get listItemContainerStyle () {
