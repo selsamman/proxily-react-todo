@@ -23,7 +23,7 @@ export class ListItemController {
 
     toggleCompleted () {
         this.listItem.completed = !this.listItem.completed;
-        this.listController.todoCompletionChanged();
+        this.listController.deleteNotificationController.todoCompletionChanged();
     }
 }
 export const ListItemContext = React.createContext<ListItemController>(undefined as unknown as ListItemController);

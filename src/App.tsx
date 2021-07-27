@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import {Container, Row, Col} from "react-bootstrap";
+import {Container} from "react-bootstrap";
 import {List} from "./components/List";
 import {Header} from "./components/Header";
 import {ListContext, ListController} from './controllers/ListController';
@@ -17,20 +17,15 @@ const toDoListStyle = persist(new TodoListStyle(), {key: 'style', classes: Objec
 const styleController = makeObservable(new StyleController(toDoListStyle));
 const listController = makeObservable(new ListController(toDoList));
 
-
 function App() {
     useObservables();
     const {backgroundStyle} = styleController;
     return (
       <StyleContext.Provider value={styleController}>
           <ListContext.Provider value={listController}>
-              <Container style={backgroundStyle} fluid>
+              <Container style={{padding: 0, height: '100%',  ...backgroundStyle}} fluid>
                   <Header />
-                  <Row style={{padding: 20}}>
-                      <Col>
-                          <List/>
-                      </Col>
-                  </Row>
+                  <List />
               </Container>
               <StyleUpdate/>
           </ListContext.Provider>

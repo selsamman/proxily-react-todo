@@ -7,12 +7,12 @@ export class StyleController {
         this.todoListStyle = toDoListStyle;
     }
     get backgroundStyle () {
-        return {backgroundColor: this.todoListStyle.backgroundColor, paddingLeft: 0, paddingRight: 0, height: "100%"}
+        return {backgroundColor: this.todoListStyle.backgroundColor}
     }
-    get navbarBg () {
+    get navbarBg () : string {
         return this.todoListStyle.navbarBg
     }
-    get navbarButtonVariant () : string {
+    get navbarButtonVariant () : string | undefined {
         return this.todoListStyle.navbarBg === 'dark' ? 'secondary' : 'outline';
     }
     get listItemContainerStyle () {

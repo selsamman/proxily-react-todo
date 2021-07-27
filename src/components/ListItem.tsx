@@ -5,13 +5,13 @@ import {ListItemContext} from "../controllers/ListItemController";
 import {StyleContext} from "../controllers/StyleController";
 
 export function ListItem () {
+
     useObservables();
     const listItemController = useContext(ListItemContext);
     const styleController = useContext(StyleContext);
     const {completed, toggleCompleted, selected, select, unselect, title, setTitle} = listItemController;
     const {listItemStyle, checkboxStyle, inputStyle} = styleController;
-    setTimeout(()=>console.log('ListItem tick'), 0);
-    useEffect (() => {console.log('ListItem effect')}, []);
+
     return (
         <Row onClick={select}  style={listItemStyle}>
             <Col xs={1} >
