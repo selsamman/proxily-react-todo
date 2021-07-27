@@ -29,11 +29,13 @@ This is a rather simple todo application - add Todo items and check them off whe
 * Transactions
 
 ## Setting up Persistent State
+
 Best practices are to have a folder with all of your classes that represent persistent state and then to coalesce them into an index.tsx file.  This makes them easier to enumerate which will be needed when you want to persist the store.  Your persistent state classes really only need to have the essential functionality for managing the data itself and not the logic for how the data is to be used.  We place data access logic in controllers.
 
 We have two simple classes ToDoList and ToDoListItem which represent the list
 
 ###ToDoList
+
 ```javascript
 export class ToDoList {
 
@@ -55,6 +57,7 @@ export class ToDoList {
 ```
 
 ###TodoListItem
+
 ```javascript
 export class ToDoListItem {
     title = "";
@@ -63,6 +66,7 @@ export class ToDoListItem {
 ```
 
 ###TodoListStyle
+
 In order to demonstrate transactions which are used when changing the style of the list we also have a style class that represents the various style properties that can be changed
 ```javascript
 export class TodoListStyle {
@@ -75,6 +79,7 @@ export class TodoListStyle {
 ```
 
 ###index.tsx
+
 Finally, the index.tsx file in the store folder pulls all of these together
 ```javascript
 export {ToDoList} from "./ToDoList";
@@ -83,6 +88,7 @@ export {TodoListStyle} from "./TodoListStyle";
 ```
 
 ### Persisting State (App.tsx)
+
 In order to consume our persistent state in our application we instantiate the classes and persist them to local storage.
 ```javascript
 const toDoList = persist(new ToDoList(), {key: 'root', classes: Object.values(require('./store'))});
@@ -93,6 +99,7 @@ We chose to keep them in separate keys under local storage, each identified by a
 Now they are ready to be passed into our components.  They could be passed as parameters or placed in a context or passed via controllers.
 
 ### Controller Pattern
+
 This demo uses a controller pattern.  The controllers perform three functions in this pattern:
 * They act as a view model in presenting the persistent state in the way the component needs to consume it
 * They handle the logic for user events that the component captures
@@ -133,6 +140,7 @@ The main jsx is doing the following:
 Note the ***useObservables*** which is the counter-part to ***makeObservable*** which will track usage of the state and re-render the app when it changes.
 
 ### List.tsx
+
 Our list component will display the list of the items and manage the toast that is displayed when items are checked off.  In order to keep this component devoid of logic we first gather everything that our JSX will need to do its job:
 ```javascript
 export function List () {
@@ -163,6 +171,7 @@ First we retrieve the ***listController*** from context and extract ***items*** 
 Just as the list itself has a controller each list item also has a controller.  There is one instance for each list item.  We could have created this controller inside the ***ListItem*** component but this would make it harder to test and less modular.  Therefore, we create it in the JSX using ***ObservableProvider*** which will create a context with the controller as an observable.  The controller is created in the ***value*** callback which is called anytime ***dependencies*** change.  This is important since we can't rely on the key which is an index since the association of index and actual items can change when deleting items from the list.
 
 ### ListController.tsx
+
 The list controller is responsible for all activities surrounding the list and consumed by a number of components.
 ```javascript
 export class ListController {
@@ -217,6 +226,7 @@ It contains several important elements
 It contains a number of methods for maintaining the toDoList and for tracking the selection item.  It also contains the state and methods associated with deciding whether to display the Deletion Notification.
 
 ### ListItem.tsx
+
 The listItem component is fairly simple and just displays an individual list item.  It gets all information on the item from the ***listItemController*** which it retrieves from context.  It also gets style information from the ***styleController*** which it also retrieves from context.
 
 The component then displays a checkbox and either an input or a text element depending on whether this item is selected or not.  It alerts the ***listItemController*** of user actions such as selecting this item, editing the text, checking off the item.  While many of these actions involve the ***ListController*** as well this is not the concern of the ListItem component which deals exclusively with the ***ListItemController*** for all list item matters.  Controllers are an effective way to separate concerns and keep components simple.
