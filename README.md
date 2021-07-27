@@ -34,7 +34,7 @@ Best practices are to have a folder with all of your classes that represent pers
 We have two simple classes ToDoList and ToDoListItem which represent the list
 
 ###ToDoList
-```
+```javascript
 export class ToDoList {
 
     toDoListItems : Array<ToDoListItem> = [];
@@ -55,7 +55,7 @@ export class ToDoList {
 ```
 
 ###TodoListItem
-```
+```javascript
 export class ToDoListItem {
     title = "";
     completed = false;
@@ -64,7 +64,7 @@ export class ToDoListItem {
 
 ###TodoListStyle
 In order to demonstrate transactions which are used when changing the style of the list we also have a style class that represents the various style properties that can be changed
-```
+```javascript
 export class TodoListStyle {
     navbarBg = "dark";
     fontSize = 16
@@ -76,7 +76,7 @@ export class TodoListStyle {
 
 ###index.tsx
 Finally, the index.tsx file in the store folder pulls all of these together
-```
+```javascript
 export {ToDoList} from "./ToDoList";
 export {ToDoListItem} from "./ToDoListItem";
 export {TodoListStyle} from "./TodoListStyle";
@@ -84,7 +84,7 @@ export {TodoListStyle} from "./TodoListStyle";
 
 ### Persisting State (App.tsx)
 In order to consume our persistent state in our application we instantiate the classes and persist them to local storage.
-```
+```javascript
 const toDoList = persist(new ToDoList(), {key: 'root', classes: Object.values(require('./store'))});
 const toDoListStyle = persist(new TodoListStyle(), {key: 'style', classes: Object.values(require('./store'))});
 ```
@@ -100,7 +100,7 @@ This demo uses a controller pattern.  The controllers perform three functions in
 This allows the components themselves to act purely as a view and as such are very easy to test. The controllers may be consumed by multiple components.   This allows non-persistent state to be shared between components in a way that useState cannot accommodate.
   
 Given there role in presenting state to view components, we will pass the persistent state to our components by way of the controllers which we create in ***App.tsx***
-```
+```javascript
 const styleController = makeObservable(new StyleController(toDoListStyle));
 const listController = makeObservable(new ListController(toDoList));
 ```
