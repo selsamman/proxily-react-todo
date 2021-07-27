@@ -168,7 +168,7 @@ export function List () {
 ```
 First we retrieve the ***listController*** from context and extract ***items*** which is the list items themselves.  We also retrieve ***styleController*** from the context and then extract the style for the list container.  We then use the react-bootstrap ListGroup and ListItem components to iterate over the items which will be presented by our ***ListItem*** component.
 
-Just as the list itself has a controller each list item also has a controller.  There is one instance for each list item.  We could have created this controller inside the ***ListItem*** component but this would make it harder to test and less modular.  Therefore, we create it in the JSX using Proxily's ***ObservableProvider*** which will create a context with the controller as an observable.  The controller is created in the ***value*** callback which is called anytime ***dependencies*** change.  This is important since we can't rely on the key which is an index since the association of index and actual items can change when deleting items from the list.
+Just as the list itself has a controller each list item also has a controller.  There is one instance for each list item.  We could have created this controller inside the ***ListItem*** component but this would make it harder to test and less modular.  Therefore, we create it in the JSX using ***ObservableProvider*** which will create a context with the controller as an observable.  The controller is created in the ***value*** callback which is called anytime ***dependencies*** change.  This is important since we can't rely on the key which is an index since the association of index and actual items can change when deleting items from the list.
 
 ### ListController.tsx
 
@@ -294,9 +294,14 @@ export class ListItemController {
 }
 ```
 
-### Header ***
+### Header
 
-The ***Header*** component is the final component for displaying the toDo List items.  It uses the standard Navbar from react-bootstrap to display an add link and a link to bring up the style update modal.  It consumes the ***styleController*** and the ***ListController***.
+The ***Header*** component is the final component for displaying the toDo List items.  It uses the standard Navbar from react-bootstrap to display two possible actions:
+
+* Add and item to the list
+* Bring up the style update modal. 
+  
+It consumes the ***styleController*** and the ***ListController***.
 ```javascript
 export function Header () {
     useObservables();
@@ -323,4 +328,183 @@ export function Header () {
 }
 ```
 The ***Header*** also conditionally displays a message about items that have just been deleted and are due to be deleted.  It offers an undo as well.  The logic is implemented in the ***DeleteNotificationController*** which is a member of the ***ListController***
+
+### Deletion Notifications
+
+The ***ListController*** is composed of a second controller tha manages the deletion notifications which offer the option to undo the completion status of recently ticked off todos.
+
+```javascript
+class DeleteNotificationController {
+
+    constructor (listController : ListController) {
+        this.listController = listController;
+    }
+    listController;
+
+    showNotification = false;
+    
+    @memoize()
+    get completedItems () { return this.listController.items.filter(t => t.completed) }
+
+    todoCompletionChanged() {
+        if (this.completedItems.length > 0) {
+            this.showNotification = true;
+            scheduleTask(this.deleteCompletedItems, {interval: 5000}, takeLatest);
+        } else {
+            this.showNotification = false;
+        }
+    }
+
+    undoCompletedItems() {
+        this.completedItems.forEach(item => item.completed = false);
+        this.showNotification = false;
+        cancelTask(this.deleteCompletedItems,  takeLatest);
+    }
+
+    *deleteCompletedItems({interval} : {interval : number}) {
+        yield delay(interval);
+        this.showNotification = false;
+        this.completedItems.forEach(item => this.listController.removeItem(item));
+    }
+
+}
+```
+This class has a reference back to the listController so that it can have access to the toDoList items.  When the ***ListItemController*** is asked to complete a ***toDoItem*** it calls the ***todoComplettionChanged*** method in this controller.  If there are completed items then it schedules ****deletedCompletedItems*** to delete any completed items after waiting an interval of 5 seconds. 
+
+****deleteCompletedItems*** is a Saga managed by redux-saga.  The ***scheduleTask*** will do a runSaga on a dispatcher that is built-in to Proxily and this dispatcher will yield to ****deletedCompletedItems***.  Redux-saga has a number of take helpers that control the concurrency of this saga.  By using ***takeLatest***, the saga will be cancelled and restarted if another one is scheduled.  This effectively extends the amount of time before the saga will reach the part where it removes completed items.  Proxily makes it easy to use Sagas and without having to use Redux itself.  Should the user press UNDO ***undoCompleted*** items will be invoked from the ***Header*** component.  In that case the completion status will be undone and the saga cancelled with ***cancelTask***.  Note that the same taker must be past as the second parameter.  
+
+While all of this logic could have been accomplished by SetTimer and tracking various states it gets more complicated because a Promise cannot be cancelled whereas any yeild step in a saga can.
+
+### Style Update Modal Dialog
+
+This illustrates a combination of features unique to Proxily.  The ***StyleUpdate*** component manages the modal dialog.  This component could have been implemented using it's own controller though in this case choose not to so as to make clearer the steps involved in setting things up:
+```javascript
+export function StyleUpdate () {
+
+    useObservables();
+    const [transaction] = useState( () => new Transaction({timePositioning: true}));
+```
+The first step is to create a Proxily Transaction.  We only want to do this once and so use the callback form of the useState to do so.  We specify **timePositioning: true** so that undo/redo events will be recorded.
+```javascript
+    const styleController = useTransactable(useContext(StyleContext), transaction);
+    const {backgroundStyle} = styleController;
+```
+Then we setup a styleController which we will use for the modal dialog.   ***useTransactable*** returns an object that has a new copy of the state.  Changes to this object (or any objects referenced from it) will not impact the original state.  
+```javascript
+    const listController = useContext(ListContext);
+    const {showStyle, hideStyle} = listController
+```
+We need the original listController so that we can evenutally hide the modal dialog when the style update is complete
+```javascript
+  // Actions
+    const cancel = () => {
+        transaction.rollback();
+        listController.hideStyle();
+    }
+    const save = () => {
+        transaction.commit();
+        listController.hideStyle();
+    }
+    const undo = () => transaction.undo();
+    const redo = () => transaction.redo();
+```
+Event handlers for the main actions in the dialog are setup at this point.  The cancel will simply rollback the changes on the transaction which will update any transactable versions of data back to the original.  The save will commit this which copies the data back to the original state.  in both cases the style update dialog is hidden.  Finally the undo and redo button simply ask the transaction to undo or redo the latest state changes.
+
+The dialog has a "sample" todoList.  We will re-use the ***List*** component but need a sample todoList that we know will fit in the dialog and have a suitable number of entries so we set that up as well.
+```javascript
+    // Sample Todo Items
+    const sampleToDoList = new ToDoList();
+    sampleToDoList.addItem("Item 1");
+    sampleToDoList.addItem("Item 2");
+    sampleToDoList.addItem("Item 3");
+```
+Now we are ready to return the JSX:
+```javascript
+    return (
+        <Modal show={showStyle} onHide={hideStyle} size="xl">
+
+            <Modal.Header closeButton>
+                <Modal.Title>List Styles</Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+                <StyleContext.Provider value={styleController}>
+                    <ObservableProvider context={ListContext}
+                                        value={() => new ListController(sampleToDoList)}
+                                        transaction={transaction}>
+                        <Row>
+                            <Col md={6} style={backgroundStyle}>
+                                <List />
+                            </Col>
+                            <Col md={6}>
+                                <StyleFields />
+                            </Col>
+                        </Row>
+                    </ObservableProvider>
+                </StyleContext.Provider>
+            </Modal.Body>
+
+            <Modal.Footer>
+                <Button variant="secondary" disabled={!transaction.canUndo} onClick={undo}><Undo /></Button>
+                <Button variant="secondary" disabled={!transaction.canRedo} onClick={redo}><Redo /></Button>
+                <Button variant="secondary" onClick={cancel}>Cancel</Button>
+                <Button variant="primary" onClick={save}>Save changes</Button>
+            </Modal.Footer>
+
+        </Modal>
+    );
+}
+```
+We setup the ***ListController*** and ***StyleController*** as contexts.  Since ***styleController*** has already been created we use normal context provider component.  We need to create the ***ListController*** based on the ***sampleToDoList*** so we use ***ObservaleProvider*** for that task.  The JSX establishes a left column that re-uses the ***List*** component (but this time with the newly created ***ListController*** context) and a right column that can be used to change the style.  The buttons at the bottom simply invoke the actions we already setup.
+
+The updating of the fields in the ***StyleFields*** component is a very straightforward component that just updates the 
+```
+export function StyleFields () {
+
+    useObservables();
+    const toDoListStyle = useContext(StyleContext).todoListStyle;
+    const [backgroundColor, setBackgroundColor] = useObservable(toDoListStyle.backgroundColor);
+    const [listFontColor, setListFontColor] = useObservable(toDoListStyle.listFontColor);
+    const [listItemBackgroundColor, setListItemBackgroundColor] = useObservable(toDoListStyle.listItemBackgroundColor);
+    const [fontSize, setFontSize] = useObservable(toDoListStyle.fontSize);
+    const [navbarBg, setNavbarBg] = useObservable(toDoListStyle.navbarBg);
+    const [activeProp, setActiveProp] = useState('');
+
+    return (
+        <>
+            <Form.Group className="mb-3" controlId="backgroundColor">
+                <Form.Label onClick={() => setActiveProp('background')}>Background Color {'>'}</Form.Label>
+                {activeProp === 'background' &&
+                    <HexColorPicker color={backgroundColor} onChange={setBackgroundColor}/>}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="listFontColor">
+                <Form.Label onClick={() => setActiveProp('listFontColor')}>Text Color {'>'}</Form.Label>
+                {activeProp === 'listFontColor' && <HexColorPicker color={listFontColor} onChange={setListFontColor}/>}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="listItemBackgroundColor">
+                <Form.Label onClick={() => setActiveProp('listItemBackgroundColor')}>Item Color {'>'}</Form.Label>
+                {activeProp === 'listItemBackgroundColor' &&
+                    <HexColorPicker color={listItemBackgroundColor} onChange={setListItemBackgroundColor}/>}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="fontSize">
+                <Form.Label onClick={() => setActiveProp('fontSize')}>Font Size  {'>'}</Form.Label>
+                {activeProp === 'fontSize' &&
+                    <Selector prop={fontSize} setter={setFontSize} choices={[10, 14, 18, 24]} />}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="navbarBg">
+                <Form.Label onClick={() => setActiveProp('navbarBg')}>Header Background{'>'}</Form.Label>
+                {activeProp === 'navbarBg' &&
+		            <Selector prop={navbarBg} setter={setNavbarBg} choices={['light', 'dark']} />}
+            </Form.Group>
+        </>
+    );
+}
+```
+In order to simplify the getting and setting of each style property ***useObservable*** is used to get both a getter and setter function for the property.  This helper will take the last property referenced (e.g. the one passed as an argument) and automatically create a function that will set it's value.  This avoids having to create numerous setters or having to modify the state directly in the component.  The activeProp just selects the current form form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
+
+
 

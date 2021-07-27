@@ -14,7 +14,7 @@ export function StyleUpdate () {
     useObservables();
     const [transaction] = useState( () => new Transaction({timePositioning: true}));
 
-    const styleController = useTransactable(useContext(StyleContext));
+    const styleController = useTransactable(useContext(StyleContext), transaction);
     const {backgroundStyle} = styleController;
 
     const listController = useContext(ListContext);
@@ -72,30 +72,9 @@ export function StyleUpdate () {
         </Modal>
     );
 }
-export function StyleList () {
 
-    const sampleToDoList = new ToDoList();
-    sampleToDoList.addItem("Item 1");
-    sampleToDoList.addItem("Item 2");
-    sampleToDoList.addItem("Item 3");
-
-    const {backgroundStyle} = useContext(StyleContext);
-    const listController = new ListController(sampleToDoList);
-
-    return (
-        <Container  style={backgroundStyle} fluid>
-            <ListContext.Provider value={listController}>
-                <Header />
-                <Row style={{padding: 20}}>
-                    <Col>
-                        <List/>
-                    </Col>
-                </Row>
-            </ListContext.Provider>
-        </Container>
-    )
-}
 export function StyleFields () {
+
     useObservables();
     const toDoListStyle = useContext(StyleContext).todoListStyle;
     const [backgroundColor, setBackgroundColor] = useObservable(toDoListStyle.backgroundColor);
@@ -104,7 +83,6 @@ export function StyleFields () {
     const [fontSize, setFontSize] = useObservable(toDoListStyle.fontSize);
     const [navbarBg, setNavbarBg] = useObservable(toDoListStyle.navbarBg);
     const [activeProp, setActiveProp] = useState('');
-    // @ts-ignore
 
     return (
         <>
