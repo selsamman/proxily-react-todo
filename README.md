@@ -30,11 +30,11 @@ This is a rather simple todo application - add Todo items and check them off whe
 
 ## Setting up Persistent State
 
-Best practices are to have a folder with all of your classes that represent persistent state and then to coalesce them into an index.tsx file.  This makes them easier to enumerate which will be needed when you want to persist the store.  Your persistent state classes really only need to have the essential functionality for managing the data itself and not the logic for how the data is to be used.  We place data access logic in controllers.
+While Proxily does not have a formal structure for store, best practices are to have a folder with all of your classes.  Then re-export them from a single index.tsx file.  Your persistent state classes really only need to have the essential functionality for managing the data itself and not the logic for how the data is to be used.  We place data access logic in controllers.
 
 We have two simple classes ToDoList and ToDoListItem which represent the list
 
-###ToDoList
+### ToDoList
 
 ```javascript
 export class ToDoList {
@@ -56,7 +56,7 @@ export class ToDoList {
 }
 ```
 
-###TodoListItem
+### TodoListItem
 
 ```javascript
 export class ToDoListItem {
@@ -65,7 +65,7 @@ export class ToDoListItem {
 }
 ```
 
-###TodoListStyle
+### TodoListStyle
 
 In order to demonstrate transactions which are used when changing the style of the list we also have a style class that represents the various style properties that can be changed
 ```javascript
@@ -78,7 +78,7 @@ export class TodoListStyle {
 }
 ```
 
-###index.tsx
+### store/index.tsx
 
 Finally, the index.tsx file in the store folder pulls all of these together
 ```javascript
@@ -141,7 +141,7 @@ Note the ***useObservables*** which is the counter-part to ***makeObservable*** 
 
 ### List.tsx
 
-Our list component will display the list of the items and manage the toast that is displayed when items are checked off.  In order to keep this component devoid of logic we first gather everything that our JSX will need to do its job:
+Our list component will display the list of the items:
 ```javascript
 export function List () {
 
@@ -168,7 +168,7 @@ export function List () {
 ```
 First we retrieve the ***listController*** from context and extract ***items*** which is the list items themselves.  We also retrieve ***styleController*** from the context and then extract the style for the list container.  We then use the react-bootstrap ListGroup and ListItem components to iterate over the items which will be presented by our ***ListItem*** component.
 
-Just as the list itself has a controller each list item also has a controller.  There is one instance for each list item.  We could have created this controller inside the ***ListItem*** component but this would make it harder to test and less modular.  Therefore, we create it in the JSX using ***ObservableProvider*** which will create a context with the controller as an observable.  The controller is created in the ***value*** callback which is called anytime ***dependencies*** change.  This is important since we can't rely on the key which is an index since the association of index and actual items can change when deleting items from the list.
+Just as the list itself has a controller each list item also has a controller.  There is one instance for each list item.  We could have created this controller inside the ***ListItem*** component but this would make it harder to test and less modular.  Therefore, we create it in the JSX using Proxily's ***ObservableProvider*** which will create a context with the controller as an observable.  The controller is created in the ***value*** callback which is called anytime ***dependencies*** change.  This is important since we can't rely on the key which is an index since the association of index and actual items can change when deleting items from the list.
 
 ### ListController.tsx
 
@@ -262,4 +262,65 @@ export function ListItem () {
     );
 }
 ```  
+
+### ListItemController
+
+ListItem has a very simple controller that retrieves the item properties, allows the item to be selected or completed and can discover whether the current item is the one that is selected.  It does this by interacting with ListItemController
+```javascript
+export class ListItemController {
+
+    constructor(listController : ListController, listItem : ToDoListItem) {
+        this.listController = listController;
+        this.listItem = listItem;
+    }
+
+    listController;
+    listItem;
+
+    get selected () { return !this.listItem.completed && 
+                              this.listController.isSelected(this.listItem);}
+    select () { this.listController.selectItem(this.listItem);}
+    unselect() {this.listController.selectItem(undefined);}
+
+    get title () { return this.listItem.title; }
+    setTitle (title : string) { this.listItem.title = title;}
+
+    get completed () { return this.listItem.completed }
+
+    toggleCompleted () {
+        this.listItem.completed = !this.listItem.completed;
+        this.listController.deleteNotificationController.todoCompletionChanged();
+    }
+}
+```
+
+### Header ***
+
+The ***Header*** component is the final component for displaying the toDo List items.  It uses the standard Navbar from react-bootstrap to display an add link and a link to bring up the style update modal.  It consumes the ***styleController*** and the ***ListController***.
+```javascript
+export function Header () {
+    useObservables();
+    const styleController = useContext(StyleContext);
+    const {navbarBg} = styleController;
+    const {addItem, invokeStyle, deleteNotificationController} = useContext(ListContext);
+    const {undoCompletedItems, completedItems, showNotification, closeNotification} = deleteNotificationController;
+
+
+    return (
+        <Navbar bg={navbarBg} variant={navbarBg as any} style={{height: 60}}>
+            <Button variant={styleController.navbarButtonVariant} size="sm" onClick={addItem} className="mx-3"><Plus /></Button>
+            <Button variant={styleController.navbarButtonVariant} size="sm" onClick={invokeStyle} className="mx-3"><Gear/></Button>
+            {showNotification &&
+                <>
+                    <Navbar.Brand>{completedItems.length} item{completedItems.length > 1 ? 's' : ''} will be deleted </Navbar.Brand>
+                    <Nav>
+                        <Nav.Link eventKey="*" onSelect={undoCompletedItems} style={{color: "#7099E3FF", fontSize: 18}}>UNDO</Nav.Link>
+                    </Nav>
+                </>
+            }
+        </Navbar>
+    );
+}
+```
+The ***Header*** also conditionally displays a message about items that have just been deleted and are due to be deleted.  It offers an undo as well.  The logic is implemented in the ***DeleteNotificationController*** which is a member of the ***ListController***
 
