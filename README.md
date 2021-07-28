@@ -36,7 +36,7 @@ We have two simple classes ToDoList and ToDoListItem which represent the list
 
 ### ToDoList
 
-```javascript
+```typescript
 export class ToDoList {
 
     toDoListItems : Array<ToDoListItem> = [];
@@ -327,7 +327,7 @@ export function Header () {
     );
 }
 ```
-The ***Header*** also conditionally displays a message about items that have just been deleted and are due to be deleted.  It offers an undo as well.  The logic is implemented in the ***DeleteNotificationController*** which is a member of the ***ListController***
+The ***Header*** also conditionally displays a message about items that have just been deleted and are due to be deleted.  It offers undo/redo as well.  The logic is implemented in the ***DeleteNotificationController*** which is a member of the ***ListController***
 
 ### Deletion Notifications
 
@@ -369,15 +369,15 @@ class DeleteNotificationController {
 
 }
 ```
-This class has a reference back to the listController so that it can have access to the toDoList items.  When the ***ListItemController*** is asked to complete a ***toDoItem*** it calls the ***todoComplettionChanged*** method in this controller.  If there are completed items then it schedules ****deletedCompletedItems*** to delete any completed items after waiting an interval of 5 seconds. 
+This class has a reference back to the listController so that it can have access to the toDoList items.  When the ***ListItemController*** is asked to complete a ***toDoItem***, it calls the ***todoCompletionChanged*** method in this controller.  If there are completed items then it schedules ****deletedCompletedItems*** to delete any completed items after waiting an interval of 5 seconds. 
 
-****deleteCompletedItems*** is a Saga managed by redux-saga.  The ***scheduleTask*** will do a runSaga on a dispatcher that is built-in to Proxily and this dispatcher will yield to ****deletedCompletedItems***.  Redux-saga has a number of take helpers that control the concurrency of this saga.  By using ***takeLatest***, the saga will be cancelled and restarted if another one is scheduled.  This effectively extends the amount of time before the saga will reach the part where it removes completed items.  Proxily makes it easy to use Sagas and without having to use Redux itself.  Should the user press UNDO ***undoCompleted*** items will be invoked from the ***Header*** component.  In that case the completion status will be undone and the saga cancelled with ***cancelTask***.  Note that the same taker must be past as the second parameter.  
+****deleteCompletedItems*** is a Saga managed by redux-saga.  The ***scheduleTask*** will do a runSaga on a dispatcher that is built-in to Proxily and this dispatcher will yield to ****deletedCompletedItems***.  Redux-saga has a number of take helpers that control the concurrency of this saga.  By using ***takeLatest***, the saga will be cancelled and restarted if another one is scheduled.  This effectively extends the amount of time before the saga will reach the part where it removes completed items.  Proxily makes it easy to use Sagas and without having to use Redux itself.  Should the user press UNDO ***undoCompleted*** items will be invoked from the ***Header*** component.  In that case the completion status will be undone, and the saga cancelled with ***cancelTask***.  Note that the same taker must be past as the second parameter.  
 
-While all of this logic could have been accomplished by SetTimer and tracking various states it gets more complicated because a Promise cannot be cancelled whereas any yeild step in a saga can.
+While all of this logic could have been accomplished by SetTimer and tracking various states it gets more complicated because a Promise cannot be cancelled whereas any yield step in a saga can.
 
 ### Style Update Modal Dialog
 
-This illustrates a combination of features unique to Proxily.  The ***StyleUpdate*** component manages the modal dialog.  This component could have been implemented using it's own controller though in this case choose not to so as to make clearer the steps involved in setting things up:
+This illustrates a combination of features unique to Proxily.  The ***StyleUpdate*** component manages the modal dialog.
 ```javascript
 export function StyleUpdate () {
 
@@ -389,12 +389,12 @@ The first step is to create a Proxily Transaction.  We only want to do this once
     const styleController = useTransactable(useContext(StyleContext), transaction);
     const {backgroundStyle} = styleController;
 ```
-Then we setup a styleController which we will use for the modal dialog.   ***useTransactable*** returns an object that has a new copy of the state.  Changes to this object (or any objects referenced from it) will not impact the original state.  
+Then we set up a styleController which we will use for the modal dialog.   ***useTransactable*** returns an object that has a new copy of the state.  Changes to this object (or any objects referenced from it) will not impact the original state.  
 ```javascript
     const listController = useContext(ListContext);
     const {showStyle, hideStyle} = listController
 ```
-We need the original listController so that we can evenutally hide the modal dialog when the style update is complete
+We need the original listController so that we can eventually hide the modal dialog when the style update is complete
 ```javascript
   // Actions
     const cancel = () => {
@@ -408,9 +408,9 @@ We need the original listController so that we can evenutally hide the modal dia
     const undo = () => transaction.undo();
     const redo = () => transaction.redo();
 ```
-Event handlers for the main actions in the dialog are setup at this point.  The cancel will simply rollback the changes on the transaction which will update any transactable versions of data back to the original.  The save will commit this which copies the data back to the original state.  in both cases the style update dialog is hidden.  Finally the undo and redo button simply ask the transaction to undo or redo the latest state changes.
+Event handlers for the main actions in the dialog are set up at this point.  The cancel will simply rollback the changes on the transaction which will update any transactable versions of data back to the original.  The save will commit this which copies the data back to the original state.  in both cases the style update dialog is hidden.  Finally, the undo/redo buttons simply ask the transaction to undo or redo the latest state changes.
 
-The dialog has a "sample" todoList.  We will re-use the ***List*** component but need a sample todoList that we know will fit in the dialog and have a suitable number of entries so we set that up as well.
+The dialog has a "sample" todoList.  We will re-use the ***List*** component but need a sample todoList that we know will fit in the dialog and have a suitable number of entries, so we set that up as well.
 ```javascript
     // Sample Todo Items
     const sampleToDoList = new ToDoList();
@@ -455,7 +455,7 @@ Now we are ready to return the JSX:
     );
 }
 ```
-We setup the ***ListController*** and ***StyleController*** as contexts.  Since ***styleController*** has already been created we use normal context provider component.  We need to create the ***ListController*** based on the ***sampleToDoList*** so we use ***ObservaleProvider*** for that task.  The JSX establishes a left column that re-uses the ***List*** component (but this time with the newly created ***ListController*** context) and a right column that can be used to change the style.  The buttons at the bottom simply invoke the actions we already setup.
+We set up the ***ListController*** and ***StyleController*** as contexts.  Since the ***styleController*** has already been created, we use normal context provider component.  We need to create the ***ListController*** based on ***sampleToDoList***, so we use ***ObservableProvider*** for that task.  The JSX establishes a left column that re-uses the ***List*** component (with the newly created ***ListController*** context), and a right column that can be used to change the style.  The buttons at the bottom simply invoke the actions we already set up.
 
 The updating of the fields in the ***StyleFields*** component is a very straightforward component that just updates the 
 ```
@@ -504,7 +504,7 @@ export function StyleFields () {
     );
 }
 ```
-In order to simplify the getting and setting of each style property ***useObservable*** is used to get both a getter and setter function for the property.  This helper will take the last property referenced (e.g. the one passed as an argument) and automatically create a function that will set it's value.  This avoids having to create numerous setters or having to modify the state directly in the component.  The activeProp just selects the current form form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
+In order to simplify the getting and setting of each style property ***useObservable*** is used to get both a getter and setter function for the property.  This helper will take the last property referenced, e.g., the one passed as an argument, and automatically create a function that will set its value.  This avoids having to create numerous setters or having to modify the state directly in the component.  The activeProp just selects the current form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
 
 
 
