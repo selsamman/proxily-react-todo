@@ -8,23 +8,22 @@ After checking out the project, run these commands in the project directory:
 ### `yarn install`
 ### `yarn start`
 
-Note: Until Proxily is published on NPM you need to have it in an adjacent folder.  You run yarn build and then remove node_modules.  Then you can run install and start above.
+> Note: Until Proxily is published on NPM you need to have it in an adjacent folder.  You run yarn install, yarn build and then remove node_modules.  This must be done before the above steps.
 
 # The Application
-This is a rather simple todo application - add Todo items and check them off when done.  However, it has two additional features that demonstrate unique features Proxily has to offer:
+This is a rather simple todo application. You can add items, edit them and check them off when done.  However, it has two additional features that demonstrate unique features of Proxily:
 
-* When you check off a ToDo it is not immediately removed from the list.  Instead, the item is removed after a 5-second delay.  During that time an undo link is display to undo the completion.  If you check multiple items the 5-second window extends such that items are deleted 5 seconds after the last one is checked as completed.  This is implemented quite simply and effectively with Sagas which are a standard feature of Proxily.
-
+* When you check off items they are removed after a 5-second delay.  During that time an **undo** link is display to undo the completion.  If you check multiple items the 5-second window extends such that items are deleted 5 seconds after the last one is completed.  This is implemented quite simply with Sagas.
 
 * There is a gear icon that lets you change colors and font sizes.  A preview is shown of the new style and when you are satisfied you can save or cancel changes.  These feature is implemented using transactions which fork the state and merge it back upon completion.
 
-* The style dialog also implements undo/redo by simply calling undo/redo on the transaction.
+* The style dialog also implements undo/redo which are part of Proxily transactions.
 
 # Usage Patterns Demonstrated
 
-* How to construct and persist a store
-* Reacting to state change
-* Using controllers with state
+* Creating persist a store from state
+* Using controllers to manage non-persistent state across multiple components
+* Having components react to all state changes (persistent and non-persistent)  
 * Sagas
 * Transactions
 
@@ -137,7 +136,7 @@ The main jsx is doing the following:
     * ***List*** which displays the list itself
     * ***StyleUpdate*** which is a modal dialog which will appear when the setting button is pressed
     
-Note the ***useObservables*** which is the counter-part to ***makeObservable*** which will track usage of the state and re-render the app when it changes.
+Note the **useObservables** which is the counter-part to **makeObservable**.  Using these together will track usage of the state and re-render the component when state changes.
 
 ### List.tsx
 
@@ -166,13 +165,13 @@ export function List () {
   );
 }
 ```
-First we retrieve the ***listController*** from context and extract ***items*** which is the list items themselves.  We also retrieve ***styleController*** from the context and then extract the style for the list container.  We then use the react-bootstrap ListGroup and ListItem components to iterate over the items which will be presented by our ***ListItem*** component.
+First we retrieve the ***ListController*** from context and extract ***items*** which is the list items themselves.  We also retrieve the ***StyleController*** from context and extract the style for the list container.  We iterate over the items to be presented by the ***ListItem*** component.
 
-Just as the list itself has a controller each list item also has a controller.  There is one instance for each list item.  We could have created this controller inside the ***ListItem*** component but this would make it harder to test and less modular.  Therefore, we create it in the JSX using ***ObservableProvider*** which will create a context with the controller as an observable.  The controller is created in the ***value*** callback which is called anytime ***dependencies*** change.  This is important since we can't rely on the key which is an index since the association of index and actual items can change when deleting items from the list.
+Just as the list itself has a controller, each list item also needs a controller. This ***ListItemController*** is created in JSX using **ObservableProvider** which will create a context with the controller as an observable. The controller is created in the **value** callback which is called anytime **dependencies** change.  This is important since we can't rely on indexes because the association of the index and actual items will change when deleting items from the list.
 
 ### ListController.tsx
 
-The list controller is responsible for all activities surrounding the list and consumed by a number of components.
+The list controller is responsible for all activities surrounding the list.  It is consumed by a number of components.
 ```javascript
 export class ListController {
 
@@ -220,16 +219,17 @@ export class ListController {
 }
 ```
 It contains several important elements
-* The ***toDoList*** state
-* A reference to a ***DeleteNotificationController** which manages the deletion notification (example of composition)
-* The currently selected ***toToList*** item
-It contains a number of methods for maintaining the toDoList and for tracking the selection item.  It also contains the state and methods associated with deciding whether to display the Deletion Notification.
+* A reference to the list itself
+* A reference to a ***DeleteNotificationController** which manages the deletion notification
+* The currently selected item
+
+It contains a number of methods for maintaining the list and tracking the selection of an item.  It also contains the state and methods associated with deciding whether to display the deletion notification.
 
 ### ListItem.tsx
 
-The listItem component is fairly simple and just displays an individual list item.  It gets all information on the item from the ***listItemController*** which it retrieves from context.  It also gets style information from the ***styleController*** which it also retrieves from context.
+The ***ListItem*** component displays an individual list item.  It gets all information on the item from the ***ListItemController*** which it retrieves from context.  It also gets style information from the ***StyleController*** which it also retrieves from context.
 
-The component then displays a checkbox and either an input or a text element depending on whether this item is selected or not.  It alerts the ***listItemController*** of user actions such as selecting this item, editing the text, checking off the item.  While many of these actions involve the ***ListController*** as well this is not the concern of the ListItem component which deals exclusively with the ***ListItemController*** for all list item matters.  Controllers are an effective way to separate concerns and keep components simple.
+The component then displays a checkbox and either an input or a text element depending on whether this item is selected or not.  It alerts the ***ListItemController*** of user actions such as selecting this item, editing the text or checking off the item as completed.  While many of these actions involve the ***ListController***, this is not a concern of the ***ListItem*** component which deals exclusively with the ***ListItemController***.  Controllers are an effective way to separate concerns and keep components simple and testable.
 ```javascript
 export function ListItem () {
 
@@ -265,7 +265,12 @@ export function ListItem () {
 
 ### ListItemController
 
-ListItem has a very simple controller that retrieves the item properties, allows the item to be selected or completed and can discover whether the current item is the one that is selected.  It does this by interacting with ListItemController
+The ***ListItem*** component has a very simple controller that:
+* Retrieves the item properties
+* Allows the item to be selected or completed
+* Determines whether the current item is the one that is selected. 
+  
+It does this by interacting with the ***ListController***
 ```javascript
 export class ListItemController {
 
@@ -296,12 +301,12 @@ export class ListItemController {
 
 ### Header
 
-The ***Header*** component is the final component for displaying the toDo List items.  It uses the standard Navbar from react-bootstrap to display two possible actions:
+The ***Header*** component is the final component for displaying the list.  It uses the standard **Navbar** from react-bootstrap to display two possible actions:
 
-* Add and item to the list
-* Bring up the style update modal. 
+* Add an item to the list
+* Bring up the style update modal dialog. 
   
-It consumes the ***styleController*** and the ***ListController***.
+It consumes the ***StyleController*** and the ***ListController***.
 ```javascript
 export function Header () {
     useObservables();
@@ -331,7 +336,7 @@ The ***Header*** also conditionally displays a message about items that have jus
 
 ### Deletion Notifications
 
-The ***ListController*** is composed of a second controller tha manages the deletion notifications which offer the option to undo the completion status of recently ticked off todos.
+The ***ListController*** is composed of a second controller that manages the deletion notifications.  It offers the option to undo the completion status of recently completed todos.
 
 ```javascript
 class DeleteNotificationController {
@@ -369,32 +374,34 @@ class DeleteNotificationController {
 
 }
 ```
-This class has a reference back to the listController so that it can have access to the toDoList items.  When the ***ListItemController*** is asked to complete a ***toDoItem***, it calls the ***todoCompletionChanged*** method in this controller.  If there are completed items then it schedules ****deletedCompletedItems*** to delete any completed items after waiting an interval of 5 seconds. 
+This class has a reference back to the ***ListController*** so that it can have access to the list items.  When the ***ListItemController*** changes the completion status of an item, it calls ***todoCompletionChanged*** which schedules ****deletedCompletedItems*** to delete any completed items after waiting an interval of 5 seconds. 
 
-****deleteCompletedItems*** is a Saga managed by redux-saga.  The ***scheduleTask*** will do a runSaga on a dispatcher that is built-in to Proxily and this dispatcher will yield to ****deletedCompletedItems***.  Redux-saga has a number of take helpers that control the concurrency of this saga.  By using ***takeLatest***, the saga will be cancelled and restarted if another one is scheduled.  This effectively extends the amount of time before the saga will reach the part where it removes completed items.  Proxily makes it easy to use Sagas and without having to use Redux itself.  Should the user press UNDO ***undoCompleted*** items will be invoked from the ***Header*** component.  In that case the completion status will be undone, and the saga cancelled with ***cancelTask***.  Note that the same taker must be past as the second parameter.  
+****deleteCompletedItems*** is a Saga managed by redux-saga.  The ***scheduleTask*** will run a dispatcher Saga, built-in to Proxily, that will yield to ****deletedCompletedItems*** saga.  Redux-saga has a number of take helpers that control the concurrency of this saga.  By using ***takeLatest***, the saga will be cancelled and restarted if another one is scheduled.  This extends the amount of time before the saga will reach the code to remove the completed items since the saga will restart from the beginning.  
 
-While all of this logic could have been accomplished by SetTimer and tracking various states it gets more complicated because a Promise cannot be cancelled whereas any yield step in a saga can.
+Should the user press UNDO ***undoCompleted*** items will be invoked from the ***Header*** component.  In that case the completion status will be undone, and the saga cancelled with ***cancelTask***.  Note that the same taker must be past as the second parameter.  
+
+Proxily makes it easy to use Sagas and without having to use Redux itself. While all of this logic could have been accomplished by SetTimer and tracking various states it gets more complicated because a Promise cannot be cancelled whereas any yield step in a saga can.
 
 ### Style Update Modal Dialog
 
-This illustrates a combination of features unique to Proxily.  The ***StyleUpdate*** component manages the modal dialog.
+The ***StyleUpdate*** component manages the modal dialog which allows styles to be changed.  It shows a preview of the list and defers committing the style changes until the user presses the save button.  It also offers undo/redo as well as the ability to reset the style back to the state at the start of the dialog.
 ```javascript
 export function StyleUpdate () {
 
     useObservables();
     const [transaction] = useState( () => new Transaction({timePositioning: true}));
 ```
-The first step is to create a Proxily Transaction.  We only want to do this once and so use the callback form of the useState to do so.  We specify **timePositioning: true** so that undo/redo events will be recorded.
+The first step is to create a Proxily **Transaction**.  We only want to do this once, so we use the callback form of the useState.  We specify **timePositioning: true** so that undo/redo events will be recorded.
 ```javascript
     const styleController = useTransactable(useContext(StyleContext), transaction);
     const {backgroundStyle} = styleController;
 ```
-Then we set up a styleController which we will use for the modal dialog.   ***useTransactable*** returns an object that has a new copy of the state.  Changes to this object (or any objects referenced from it) will not impact the original state.  
+We set up a ***StyleController*** for the modal dialog.   **useTransactable** returns an object that has a new copy of the controller.  Changes to this object (or any objects referenced from it) will not impact the original state. Thus changes made in this modal dialog will not yet impact the main list in the application.  
 ```javascript
     const listController = useContext(ListContext);
     const {showStyle, hideStyle} = listController
 ```
-We need the original listController so that we can eventually hide the modal dialog when the style update is complete
+We need the original ***ListController*** in order to dismiss the modal dialog when the style update is complete.
 ```javascript
   // Actions
     const cancel = () => {
@@ -408,7 +415,7 @@ We need the original listController so that we can eventually hide the modal dia
     const undo = () => transaction.undo();
     const redo = () => transaction.redo();
 ```
-Event handlers for the main actions in the dialog are set up at this point.  The cancel will simply rollback the changes on the transaction which will update any transactable versions of data back to the original.  The save will commit this which copies the data back to the original state.  in both cases the style update dialog is hidden.  Finally, the undo/redo buttons simply ask the transaction to undo or redo the latest state changes.
+Event handlers for the main actions in the dialog are set up at this point.  The cancel will simply rollback the changes on the transaction which will update any transactable versions of data back to the original.  The save will commit changes in the transactable versions of the data back to this which copies the original. In both cases the modal dialog is dismissed.  Undo and redo buttons ask the transaction to undo or redo the latest state changes.
 
 The dialog has a "sample" todoList.  We will re-use the ***List*** component but need a sample todoList that we know will fit in the dialog and have a suitable number of entries, so we set that up as well.
 ```javascript
@@ -455,9 +462,9 @@ Now we are ready to return the JSX:
     );
 }
 ```
-We set up the ***ListController*** and ***StyleController*** as contexts.  Since the ***styleController*** has already been created, we use normal context provider component.  We need to create the ***ListController*** based on ***sampleToDoList***, so we use ***ObservableProvider*** for that task.  The JSX establishes a left column that re-uses the ***List*** component (with the newly created ***ListController*** context), and a right column that can be used to change the style.  The buttons at the bottom simply invoke the actions we already set up.
+We set up the ***ListController*** and ***StyleController*** as contexts.  Since the ***StyleController*** has already been created, we use the normal context provider component.  We need to create the ***ListController*** based on ***sampleToDoList***, so we use **ObservableProvider** for that task.  The JSX establishes a left column that re-uses the ***List*** component (with the newly created ***ListController*** context), and a right column that can be used to change the style.  The buttons at the bottom simply invoke the actions we already set up.
 
-The updating of the fields in the ***StyleFields*** component is a very straightforward component that just updates the 
+The updating of the fields in the ***StyleFields*** component is a very straightforward. It simply displays the current style attribute and allows it to be updated.
 ```
 export function StyleFields () {
 
@@ -504,7 +511,7 @@ export function StyleFields () {
     );
 }
 ```
-In order to simplify the getting and setting of each style property ***useObservable*** is used to get both a getter and setter function for the property.  This helper will take the last property referenced, e.g., the one passed as an argument, and automatically create a function that will set its value.  This avoids having to create numerous setters or having to modify the state directly in the component.  The activeProp just selects the current form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
+In order to simplify the getting and setting of each style property **useObservable** is used to create a "getter" and a "setter" function for each property.  This helper will take the last property referenced, e.g., the one passed as an argument, and automatically create a function that will set its value.  This avoids having to create numerous setters or having to modify the state directly in the component code.  The ***activeProp*** just selects the current form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
 
 
 
