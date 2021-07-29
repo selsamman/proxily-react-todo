@@ -110,7 +110,7 @@ Given their role in presenting state to view components, we will pass the persis
 const styleController = makeObservable(new StyleController(toDoListStyle));
 const listController = makeObservable(new ListController(toDoList));
 ```
-After creating them, we must make them observable using **makeObservable** such that any components that reference them will react to changes. We then pass them to our components using React context providers:
+After creating them, we must make them observable using **makeObservable** such that any components that reference them will react to state changes. We then pass them to our components using React context providers:
 ```javascript
 function App() {
     useObservables();
@@ -167,7 +167,7 @@ export function List () {
 ```
 First we retrieve the ***ListController*** from context and extract ***items*** which is the list items themselves.  We also retrieve the ***StyleController*** from context and extract the style for the list container.  We iterate over the items to be presented by the ***ListItem*** component.
 
-Just as the list itself has a controller, each list item also needs a controller. This ***ListItemController*** is created in JSX using **ObservableProvider** which will create a context with the controller as an observable. The controller is created in the **value** callback which is called anytime **dependencies** change.  This is important since we can't rely on indexes because the association of the index and actual items will change when deleting items from the list.
+Just as the list itself has a controller, each list item also needs a controller. This ***ListItemController*** is created in JSX using **ObservableProvider** which will create a context with the controller as an observable. The controller is created in the **value** callback which is called anytime **dependencies** change.  This is important since we can't rely on indexes. That is because the association of the index and actual items will change when deleting items from the list.
 
 ### ListController.tsx
 
@@ -511,7 +511,7 @@ export function StyleFields () {
     );
 }
 ```
-In order to simplify the getting and setting of each style property **useObservable** is used to create a "getter" and a "setter" function for each property.  This helper will take the last property referenced, e.g., the one passed as an argument, and automatically create a function that will set its value.  This avoids having to create numerous setters or having to modify the state directly in the component code.  The ***activeProp*** just selects the current form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
+In order to simplify the getting and setting of each style property **useObservable** is used to create a "getter", and a "setter" function for each property.  This helper will take the last property referenced, e.g., the one passed as an argument, and automatically create a function that will set its value.  This avoids having to create numerous setters or having to modify the state directly in the component code.  The ***activeProp*** just selects the current form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
 
 
 
