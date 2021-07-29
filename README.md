@@ -173,7 +173,7 @@ Just as the list itself has a controller, each list item also needs a controller
 
 The list controller is responsible for all activities surrounding the list.  It is consumed by a number of components.  It contains several important elements
 * A reference to the list itself
-* A reference to a ***DeleteNotificationController** which manages the deletion notification
+* A reference to a ***DeleteNotificationController*** which manages the deletion notification
 * The currently selected item
 * A number of getters for presenting the data
 * Methods for maintaining the list and tracking the selection of an item.
