@@ -105,12 +105,12 @@ This demo uses a controller pattern.  The controllers perform three functions in
 * They may have state which is germaine to the user interactions such as maintaining the currently selected toDo list.
 This allows the components themselves to act purely as a view and as such are very easy to test. The controllers may be consumed by multiple components.   This allows non-persistent state to be shared between components in a way that useState cannot accommodate.
   
-Given there role in presenting state to view components, we will pass the persistent state to our components by way of the controllers which we create in ***App.tsx***
+Given their role in presenting state to view components, we will pass the persistent state to our components by way of the controllers which we create in ***App.tsx***
 ```javascript
 const styleController = makeObservable(new StyleController(toDoListStyle));
 const listController = makeObservable(new ListController(toDoList));
 ```
-After creating them, we must make them observable such that the components will react to any changes in state.  This can be changes to state in the controllers or any data that they reference such as the todo list itself and  the style.  Finally, we are ready to pass them to our components.  In this case will use React contexts to pass them along.  Using contexts makes it easier to organize when the controller is used by multiple components which we will is the case in this demo.  So here is our App's jsx
+After creating them, we must make them observable using **makeObservable** such that any components that reference them will react to changes. We then pass them to our components using React context providers:
 ```javascript
 function App() {
     useObservables();
