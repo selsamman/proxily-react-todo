@@ -171,7 +171,12 @@ Just as the list itself has a controller, each list item also needs a controller
 
 ### ListController.tsx
 
-The list controller is responsible for all activities surrounding the list.  It is consumed by a number of components.
+The list controller is responsible for all activities surrounding the list.  It is consumed by a number of components.  It contains several important elements
+* A reference to the list itself
+* A reference to a ***DeleteNotificationController** which manages the deletion notification
+* The currently selected item
+* A number of getters for presenting the data
+* Methods for maintaining the list and tracking the selection of an item.
 ```javascript
 export class ListController {
 
@@ -179,8 +184,8 @@ export class ListController {
         this.toDoList = toDoList;
         this.deleteNotificationController = new DeleteNotificationController(this);
     }
-    deleteNotificationController : DeleteNotificationController;
     toDoList : ToDoList;
+    deleteNotificationController : DeleteNotificationController;
 
     // ---- Query, add remove items
 
@@ -218,12 +223,7 @@ export class ListController {
     hideStyle () {this.showStyle = false}
 }
 ```
-It contains several important elements
-* A reference to the list itself
-* A reference to a ***DeleteNotificationController** which manages the deletion notification
-* The currently selected item
 
-It contains a number of methods for maintaining the list and tracking the selection of an item.  It also contains the state and methods associated with deciding whether to display the deletion notification.
 
 ### ListItem.tsx
 
