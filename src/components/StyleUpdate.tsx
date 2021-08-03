@@ -4,15 +4,29 @@ import {StyleContext, StyleController} from "../controllers/StyleController";
 import {ListContext, ListController} from "../controllers/ListController";
 import {Header} from "./Header";
 import {List} from "./List";
-import {Transaction, useObservable, useObservables, ObservableProvider, useTransactable} from "proxily";
+import {
+    Transaction,
+    useObservable,
+    useObservables,
+    ObservableProvider,
+    useTransactable,
+    TransactionContext
+} from "proxily";
 import {ToDoList} from "../store";
 import { HexColorPicker } from "react-colorful";
 import {Undo, Redo} from '@material-ui/icons';
 
+// Sample Todo Items
+const sampleToDoList = new ToDoList();
+sampleToDoList.addItem("Item 1");
+sampleToDoList.addItem("Item 2");
+sampleToDoList.addItem("Item 3");
+
+
 export function StyleUpdate () {
 
     useObservables();
-    const [transaction] = useState( () => new Transaction({timePositioning: true}));
+    const transaction = useContext(TransactionContext);
 
     const styleController = useTransactable(useContext(StyleContext), transaction);
     const {backgroundStyle} = styleController;
@@ -32,12 +46,6 @@ export function StyleUpdate () {
     const undo = () => transaction.undo();
     const redo = () => transaction.redo();
 
-    // Sample Todo Items
-    const sampleToDoList = new ToDoList();
-    sampleToDoList.addItem("Item 1");
-    sampleToDoList.addItem("Item 2");
-    sampleToDoList.addItem("Item 3");
-
     return (
         <Modal show={showStyle} onHide={hideStyle} size="xl">
 
@@ -49,7 +57,7 @@ export function StyleUpdate () {
                 <StyleContext.Provider value={styleController}>
                     <ObservableProvider context={ListContext}
                                         value={() => new ListController(sampleToDoList)}
-                                        transaction={transaction}>
+                                        transaction={transaction} dependencies={[sampleToDoList]}>
                         <Row>
                             <Col md={6} style={backgroundStyle}>
                                 <List />

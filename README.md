@@ -282,15 +282,15 @@ export class ListItemController {
     listController;
     listItem;
 
-    get selected () { return !this.listItem.completed && 
-                              this.listController.isSelected(this.listItem);}
-    select () { this.listController.selectItem(this.listItem);}
+    get selected () {return !this.listItem.completed && 
+                            this.listController.isSelected(this.listItem);}
+    select () {this.listController.selectItem(this.listItem);}
     unselect() {this.listController.selectItem(undefined);}
 
-    get title () { return this.listItem.title; }
-    setTitle (title : string) { this.listItem.title = title;}
+    get title () {return this.listItem.title;}
+    setTitle (title : string) {this.listItem.title = title;}
 
-    get completed () { return this.listItem.completed }
+    get completed () {return this.listItem.completed}
 
     toggleCompleted () {
         this.listItem.completed = !this.listItem.completed;
@@ -376,7 +376,7 @@ class DeleteNotificationController {
 ```
 This class has a reference back to the ***ListController*** so that it can have access to the list items.  When the ***ListItemController*** changes the completion status of an item, it calls ***todoCompletionChanged*** which schedules ****deletedCompletedItems*** to delete any completed items after waiting an interval of 5 seconds. 
 
-****deleteCompletedItems*** is a Saga managed by redux-saga.  The ***scheduleTask*** will run a dispatcher Saga, built-in to Proxily, that will yield to ****deletedCompletedItems*** saga.  Redux-saga has a number of take helpers that control the concurrency of this saga.  By using ***takeLatest***, the saga will be cancelled and restarted if another one is scheduled.  This extends the amount of time before the saga will reach the code to remove the completed items since the saga will restart from the beginning.  
+****deleteCompletedItems*** is a Saga managed by redux-saga.  The ***scheduleTask*** will run a dispatcher Saga, built-in to Proxily, that will yield to the ****deletedCompletedItems*** saga.  Redux-saga has a number of take helpers that control the concurrency of this saga.  By using ***takeLatest***, the saga will be cancelled and restarted if another one is scheduled.  This extends the amount of time before the saga will reach the code to remove the completed items since the saga will restart from the beginning.  
 
 Should the user press UNDO ***undoCompleted*** items will be invoked from the ***Header*** component.  In that case the completion status will be undone, and the saga cancelled with ***cancelTask***.  Note that the same taker must be past as the second parameter.  
 
