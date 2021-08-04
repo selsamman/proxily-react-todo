@@ -1,6 +1,6 @@
 import {useObservables} from "proxily";
 import {Col, Row} from "react-bootstrap";
-import {useContext, useEffect} from "react";
+import {useContext} from "react";
 import {ListItemContext} from "../controllers/ListItemController";
 import {StyleContext} from "../controllers/StyleController";
 

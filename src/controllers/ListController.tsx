@@ -61,7 +61,7 @@ class DeleteNotificationController {
     closeNotification () {this.showNotification = false};
 
     @memoize()
-    get completedItems () { console.log("getCompletedItems");return this.listController.items.filter(t => t.completed) }
+    get completedItems () { return this.listController.items.filter(t => t.completed) }
 
     todoCompletionChanged() {
         if (this.completedItems.length > 0) {

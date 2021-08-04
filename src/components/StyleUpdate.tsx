@@ -1,17 +1,9 @@
-import {Button, Col, Container, Form, ListGroup, Modal, Row} from "react-bootstrap";
+import {Button, Col, Form, ListGroup, Modal, Row} from "react-bootstrap";
 import React, {useContext, useState} from "react";
-import {StyleContext, StyleController} from "../controllers/StyleController";
+import {StyleContext} from "../controllers/StyleController";
 import {ListContext, ListController} from "../controllers/ListController";
-import {Header} from "./Header";
 import {List} from "./List";
-import {
-    Transaction,
-    useObservable,
-    useObservables,
-    ObservableProvider,
-    useTransactable,
-    TransactionContext
-} from "proxily";
+import {useObservableProp, useObservables, ObservableProvider, useTransactable, TransactionContext} from "proxily";
 import {ToDoList} from "../store";
 import { HexColorPicker } from "react-colorful";
 import {Undo, Redo} from '@material-ui/icons';
@@ -85,11 +77,11 @@ export function StyleFields () {
 
     useObservables();
     const toDoListStyle = useContext(StyleContext).todoListStyle;
-    const [backgroundColor, setBackgroundColor] = useObservable(toDoListStyle.backgroundColor);
-    const [listFontColor, setListFontColor] = useObservable(toDoListStyle.listFontColor);
-    const [listItemBackgroundColor, setListItemBackgroundColor] = useObservable(toDoListStyle.listItemBackgroundColor);
-    const [fontSize, setFontSize] = useObservable(toDoListStyle.fontSize);
-    const [navbarBg, setNavbarBg] = useObservable(toDoListStyle.navbarBg);
+    const [backgroundColor, setBackgroundColor] = useObservableProp(toDoListStyle.backgroundColor);
+    const [listFontColor, setListFontColor] = useObservableProp(toDoListStyle.listFontColor);
+    const [listItemBackgroundColor, setListItemBackgroundColor] = useObservableProp(toDoListStyle.listItemBackgroundColor);
+    const [fontSize, setFontSize] = useObservableProp(toDoListStyle.fontSize);
+    const [navbarBg, setNavbarBg] = useObservableProp(toDoListStyle.navbarBg);
     const [activeProp, setActiveProp] = useState('');
 
     return (

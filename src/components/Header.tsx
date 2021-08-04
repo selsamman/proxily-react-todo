@@ -1,5 +1,5 @@
-import {Dropdown, DropdownButton, Navbar, Button, Toast, Nav} from "react-bootstrap";
-import {ListController, ListContext} from "../controllers/ListController";
+import {Navbar, Button, Nav} from "react-bootstrap";
+import {ListContext} from "../controllers/ListController";
 import {useObservables} from "proxily";
 import {useContext} from "react";
 import {StyleContext} from "../controllers/StyleController";
@@ -10,7 +10,7 @@ export function Header () {
     const styleController = useContext(StyleContext);
     const {navbarBg} = styleController;
     const {addItem, invokeStyle, deleteNotificationController} = useContext(ListContext);
-    const {undoCompletedItems, completedItems, showNotification, closeNotification} = deleteNotificationController;
+    const {undoCompletedItems, completedItems, showNotification} = deleteNotificationController;
 
 
     return (

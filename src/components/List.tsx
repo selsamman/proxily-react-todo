@@ -1,11 +1,10 @@
-import {makeObservable, useObservable, useObservables, ObservableProvider} from "proxily";
-import {Button, Card, ListGroup, Toast} from "react-bootstrap";
+import {useObservables, ObservableProvider} from "proxily";
+import {Card, ListGroup} from "react-bootstrap";
 import {ListItem} from "./ListItem";
-import {useContext, useEffect, useState} from "react";
+import {useContext} from "react";
 import {ListContext} from "../controllers/ListController";
 import {ListItemController, ListItemContext} from "../controllers/ListItemController";
 import {StyleContext} from "../controllers/StyleController";
-
 
 export function List () {
     useObservables()
