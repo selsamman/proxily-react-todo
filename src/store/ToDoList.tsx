@@ -6,10 +6,7 @@ export class ToDoList {
     nextId = 1;
 
     addItem (title? : string) {
-        const newTodo = new ToDoListItem(this.nextId++);
-        if (title)
-            newTodo.title = title;
-        this.toDoListItems.push(newTodo);
+        this.toDoListItems.push(new ToDoListItem(this.nextId++, title));
     }
 
     deleteItem(item : ToDoListItem) {

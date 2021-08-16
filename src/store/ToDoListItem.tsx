@@ -4,8 +4,9 @@ export class ToDoListItem {
     title = "";
     completed = false;
 
-    constructor(id : number) {
+    constructor(id : number, title? : string) {
         this.id = id;
+        this.title = title || "";
     }
 
 }
