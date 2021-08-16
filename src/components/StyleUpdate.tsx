@@ -3,10 +3,11 @@ import React, {useContext, useState} from "react";
 import {StyleContext} from "../controllers/StyleController";
 import {ListContext, ListController} from "../controllers/ListController";
 import {List} from "./List";
-import {useObservableProp, useObservables, ObservableProvider, useTransactable, TransactionContext} from "proxily";
+import {useObservableProp, useObservables, useTransaction, useTransactable, useLocalObservable} from "proxily";
 import {ToDoList} from "../store";
 import { HexColorPicker } from "react-colorful";
 import {Undo, Redo} from '@material-ui/icons';
+import {Header} from "./Header";
 
 // Sample Todo Items
 const sampleToDoList = new ToDoList();
@@ -18,13 +19,15 @@ sampleToDoList.addItem("Item 3");
 export function StyleUpdate () {
 
     useObservables();
-    const transaction = useContext(TransactionContext);
 
+    const listController = useContext(ListContext);
+    const {showStyle, hideStyle} = listController;
+    const sampleListController = useLocalObservable(() => new ListController(sampleToDoList))
+
+    const transaction = useTransaction({timePositioning: true});
     const styleController = useTransactable(useContext(StyleContext), transaction);
     const {backgroundStyle} = styleController;
 
-    const listController = useContext(ListContext);
-    const {showStyle, hideStyle} = listController
 
     // Actions
     const cancel = () => {
@@ -38,6 +41,8 @@ export function StyleUpdate () {
     const undo = () => transaction.undo();
     const redo = () => transaction.redo();
 
+
+
     return (
         <Modal show={showStyle} onHide={hideStyle} size="xl">
 
@@ -47,18 +52,17 @@ export function StyleUpdate () {
 
             <Modal.Body>
                 <StyleContext.Provider value={styleController}>
-                    <ObservableProvider context={ListContext}
-                                        value={() => new ListController(sampleToDoList)}
-                                        transaction={transaction} dependencies={[sampleToDoList]}>
+                    <ListContext.Provider value={sampleListController}>
                         <Row>
                             <Col md={6} style={backgroundStyle}>
+                                <Header />
                                 <List />
                             </Col>
                             <Col md={6}>
                                 <StyleFields />
                             </Col>
                         </Row>
-                    </ObservableProvider>
+                    </ListContext.Provider>
                 </StyleContext.Provider>
             </Modal.Body>
 

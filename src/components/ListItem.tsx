@@ -1,16 +1,28 @@
-import {useObservables} from "proxily";
+import {useObservableProp, useObservables} from "proxily";
 import {Col, Row} from "react-bootstrap";
 import {useContext} from "react";
-import {ListItemContext} from "../controllers/ListItemController";
 import {StyleContext} from "../controllers/StyleController";
+import {ToDoListItem} from "../store";
+import {ListContext} from "../controllers/ListController";
 
-export function ListItem () {
+export function ListItem ({item} : {item : ToDoListItem}) {
 
     useObservables();
-    const listItemController = useContext(ListItemContext);
+
+    const listController = useContext(ListContext);
+    const isSelected = listController.isSelected(item);
+
     const styleController = useContext(StyleContext);
-    const {completed, toggleCompleted, selected, select, unselect, title, setTitle} = listItemController;
     const {listItemStyle, checkboxStyle, inputStyle} = styleController;
+    const [title, setTitle] = useObservableProp(item.title);
+    const [completed, setCompleted] = useObservableProp(item.completed);
+
+    const toggleCompleted = () => {
+        setCompleted(!completed);
+        listController.deleteNotificationController.todoCompletionChanged();
+    }
+    const select = () => listController.selectItem(item);
+    const unselect = () => listController.selectItem(undefined);
 
     return (
         <Row onClick={select}  style={listItemStyle}>
@@ -18,14 +30,14 @@ export function ListItem () {
                 <input type="checkbox" checked={completed} onChange={toggleCompleted} style={checkboxStyle}/>
             </Col>
             <Col>
-                {selected &&
+                {isSelected &&
                     <form onSubmit={unselect}>
                     <input type="text" autoFocus={true} style={inputStyle}
                            onChange={ (e) => setTitle(e.target.value) }
                            value={title} />
                     </form>
                 }
-                {!selected &&
+                {!isSelected &&
                     <span style={{textDecoration: completed ? "line-through" : ""}}>
                         {title}
                     </span>

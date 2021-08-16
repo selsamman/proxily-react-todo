@@ -4,7 +4,7 @@ import {Container} from "react-bootstrap";
 import {List} from "./components/List";
 import {Header} from "./components/Header";
 import {ListContext, ListController} from './controllers/ListController';
-import {configureReduxDevTools, initReduxDevTools, makeObservable, persist, useObservables, TransactionProvider} from "proxily";
+import {configureReduxDevTools, initReduxDevTools, makeObservable, persist, useObservables} from "proxily";
 import {ToDoList, TodoListStyle} from "./store";
 import {StyleContext, StyleController} from "./controllers/StyleController";
 import {StyleUpdate} from "./components/StyleUpdate";
@@ -25,14 +25,12 @@ function App() {
     return (
         <StyleContext.Provider value={styleController}>
             <ListContext.Provider value={listController}>
-                <Container style={{padding: 0, height: '100%',  ...backgroundStyle}} fluid>
-                    <Header />
-                    <List />
+                <Container style={{padding: 0, height: '100%', ...backgroundStyle}} fluid>
+                    <Header/>
+                    <List/>
                 </Container>
                 {showStyle &&
-                    <TransactionProvider options={{timePositioning: true}}>
-                        <StyleUpdate/>
-                    </TransactionProvider>
+				    <StyleUpdate/>
                 }
             </ListContext.Provider>
         </StyleContext.Provider>

@@ -11,7 +11,7 @@ After checking out the project, run these commands in the project directory:
 > Note: Until Proxily is published on NPM you need to have it in an adjacent folder.  You run yarn install, yarn build and then remove node_modules.  This must be done before the above steps.
 
 # The Application
-This is a rather simple todo application. You can add items, edit them and check them off when done.  However, it has two additional features that demonstrate unique features of Proxily:
+This is a based more on the Google style todo list. You can add items, edit them and check them off when done.  However, it has two additional features that demonstrate unique features of Proxily:
 
 * When you check off items they are removed after a 5-second delay.  During that time an **undo** link is display to undo the completion.  If you check multiple items the 5-second window extends such that items are deleted 5 seconds after the last one is completed.  This is implemented quite simply with Sagas.
 
@@ -21,7 +21,7 @@ This is a rather simple todo application. You can add items, edit them and check
 
 # Usage Patterns Demonstrated
 
-* Creating persist a store from state
+* Creating state and persisting it
 * Using controllers to manage non-persistent state across multiple components
 * Having components react to all state changes (persistent and non-persistent)  
 * Sagas
@@ -38,20 +38,22 @@ We have two simple classes ToDoList and ToDoListItem which represent the list
 ```typescript
 export class ToDoList {
 
-    toDoListItems : Array<ToDoListItem> = [];
+  toDoListItems : Array<ToDoListItem> = [];
+  nextId = 1;
 
-    addItem (title? : string) {
-        const newTodo = new ToDoListItem();
-        if (title)
-            newTodo.title = title;
-        this.toDoListItems.push(newTodo);
-    }
+  addItem (title? : string) {
+    const newTodo = new ToDoListItem(this.nextId++);
+    if (title)
+      newTodo.title = title;
+    this.toDoListItems.push(newTodo);
+  }
 
-    deleteItem(item : ToDoListItem) {
-        const ix = this.toDoListItems.findIndex(i => i === item);
-        if (ix >= 0)
-            this.toDoListItems.splice(ix, 1);
-    }
+  deleteItem(item : ToDoListItem) {
+    const ix = this.toDoListItems.findIndex(i => i === item);
+    if (ix >= 0)
+      this.toDoListItems.splice(ix, 1);
+  }
+
 }
 ```
 
@@ -59,8 +61,15 @@ export class ToDoList {
 
 ```javascript
 export class ToDoListItem {
-    title = "";
-    completed = false;
+
+  id = 0;
+  title = "";
+  completed = false;
+
+  constructor(id : number) {
+    this.id = id;
+  }
+
 }
 ```
 
@@ -100,9 +109,9 @@ Now they are ready to be passed into our components.  They could be passed as pa
 ### Controller Pattern
 
 This demo uses a controller pattern.  The controllers perform three functions in this pattern:
-* They act as a view model in presenting the persistent state in the way the component needs to consume it
+* They act as a view model in presenting the persistent state in the way the component needs to consume it.  
 * They handle the logic for user events that the component captures
-* They may have state which is germaine to the user interactions such as maintaining the currently selected toDo list.
+* They may have state of their own which is germaine to the user interactions such as maintaining the currently selected toDo list.
 This allows the components themselves to act purely as a view and as such are very easy to test. The controllers may be consumed by multiple components.   This allows non-persistent state to be shared between components in a way that useState cannot accommodate.
   
 Given their role in presenting state to view components, we will pass the persistent state to our components by way of the controllers which we create in ***App.tsx***
@@ -111,21 +120,26 @@ const styleController = makeObservable(new StyleController(toDoListStyle));
 const listController = makeObservable(new ListController(toDoList));
 ```
 After creating them, we must make them observable using **makeObservable** such that any components that reference them will react to state changes. We then pass them to our components using React context providers:
-```javascript
+```typescript jsx
 function App() {
-    useObservables();
-    const {backgroundStyle} = styleController;
-    return (
-      <StyleContext.Provider value={styleController}>
-          <ListContext.Provider value={listController}>
-              <Container style={backgroundStyle} fluid>
-                  <Header />
-                  <List />
-              </Container>
-              <StyleUpdate/>
-          </ListContext.Provider>
-      </StyleContext.Provider>
-    );
+
+  useObservables();
+  const {backgroundStyle} = styleController;
+  const {showStyle} = listController;
+
+  return (
+    <StyleContext.Provider value={styleController}>
+      <ListContext.Provider value={listController}>
+        <Container style={{padding: 0, height: '100%', ...backgroundStyle}} fluid>
+          <Header/>
+          <List/>
+        </Container>
+        {showStyle &&
+          <StyleUpdate/>
+        }
+      </ListContext.Provider>
+    </StyleContext.Provider>
+  );
 }
 ```
 The main jsx is doing the following:
@@ -141,33 +155,29 @@ Note the **useObservables** which is the counter-part to **makeObservable**.  Us
 ### List.tsx
 
 Our list component will display the list of the items:
-```javascript
+```typescript jsx
 export function List () {
 
-    useObservables()
-    const listController = useContext(ListContext);
-    const {items} = listController;
-    const {listItemContainerStyle} = useContext(StyleContext);;
+  useObservables()
 
-    return (
-        <Card style={{padding: 20}}>
+  const listController = useContext(ListContext);
+  const {items} = listController;
+  const {listItemContainerStyle, backgroundStyle} = useContext(StyleContext);
+
+  return (
+          <Card style={{padding: 20, ...backgroundStyle}}>
             <ListGroup variant="flush">
-                {items.map( (item, ix) =>
-                    <ObservableProvider key={ix} context={ListItemContext} dependencies={[item]}
-                                        value={()=>new ListItemController(listController, item)}>
-                        <ListGroup.Item key={ix}  style={listItemContainerStyle}>
-                            <ListItem key={ix}/>
-                        </ListGroup.Item>
-                    </ObservableProvider>
-                )}
+              {items.map( (item, ix) =>
+                      <ListGroup.Item key={item.id}  style={listItemContainerStyle}>
+                        <ListItem key={item.id} item={item}/>
+                      </ListGroup.Item>
+              )}
             </ListGroup>
-        </Card>
+          </Card>
   );
 }
 ```
-First we retrieve the ***ListController*** from context and extract ***items*** which is the list items themselves.  We also retrieve the ***StyleController*** from context and extract the style for the list container.  We iterate over the items to be presented by the ***ListItem*** component.
-
-Just as the list itself has a controller, each list item also needs a controller. This ***ListItemController*** is created in JSX using **ObservableProvider** which will create a context with the controller as an observable. The controller is created in the **value** callback which is called anytime **dependencies** change.  This is important since we can't rely on indexes. That is because the association of the index and actual items will change when deleting items from the list.
+First we retrieve the ***ListController*** from context and extract ***items*** which is the list items themselves.  We also retrieve the ***StyleController*** from context and extract the style for the list container.  We iterate over the items to be presented by the ***ListItem*** component and pass each item to the ***ListItem*** component as a parameter.
 
 ### ListController.tsx
 
@@ -227,77 +237,51 @@ export class ListController {
 
 ### ListItem.tsx
 
-The ***ListItem*** component displays an individual list item.  It gets all information on the item from the ***ListItemController*** which it retrieves from context.  It also gets style information from the ***StyleController*** which it also retrieves from context.
+The ***ListItem*** component displays an individual list item.  It is passed the list item as a parameter and gets it's ***ListController*** and ***StyleController*** from context.  **useObservableProp** provides getters and setters for the item properties that must be set.  The component also interacts with the ***ListController*** to determine if the item is selected, to select list items and notify the list controller when an item has been checked off.
 
-The component then displays a checkbox and either an input or a text element depending on whether this item is selected or not.  It alerts the ***ListItemController*** of user actions such as selecting this item, editing the text or checking off the item as completed.  While many of these actions involve the ***ListController***, this is not a concern of the ***ListItem*** component which deals exclusively with the ***ListItemController***.  Controllers are an effective way to separate concerns and keep components simple and testable.
 ```javascript
-export function ListItem () {
+export function ListItem ({item} : {item : ToDoListItem}) {
 
-    useObservables();
-    const listItemController = useContext(ListItemContext);
-    const styleController = useContext(StyleContext);
-    const {completed, toggleCompleted, selected, select, unselect, title, setTitle} = listItemController;
-    const {listItemStyle, checkboxStyle, inputStyle} = styleController;
+  useObservables();
 
-    return (
-        <Row onClick={select}  style={listItemStyle}>
+  const listController = useContext(ListContext);
+  const styleController = useContext(StyleContext);
+  const {listItemStyle, checkboxStyle, inputStyle} = styleController;
+  
+  const [title, setTitle] = useObservableProp(item.title);
+  const [completed, setCompleted] = useObservableProp(item.completed);
+  const selected = listController.selectedItem === item;
+
+  const toggleCompleted = () => {
+    setCompleted(!completed);
+    listController.deleteNotificationController.todoCompletionChanged();
+  }
+  const select = () => listController.selectItem(item);
+  const unselect = () => listController.selectItem(undefined);
+
+  return (
+          <Row onClick={select}  style={listItemStyle}>
             <Col xs={1} >
-                <input type="checkbox" checked={completed} onChange={toggleCompleted} style={checkboxStyle}/>
+              <input type="checkbox" checked={completed} onChange={toggleCompleted} style={checkboxStyle}/>
             </Col>
             <Col>
-                {selected &&
-                    <form onSubmit={unselect}>
-                    <input type="text" autoFocus={true} style={inputStyle}
-                           onChange={ (e) => setTitle(e.target.value) }
-                           value={title} />
-                    </form>
-                }
-                {!selected &&
-                    <span style={{textDecoration: completed ? "line-through" : ""}}>
-                        {title}
-                    </span>
-                }
+              {selected &&
+              <form onSubmit={unselect}>
+                <input type="text" autoFocus={true} style={inputStyle}
+                       onChange={ (e) => setTitle(e.target.value) }
+                       value={title} />
+              </form>
+              }
+              {!selected &&
+              <span style={{textDecoration: completed ? "line-through" : ""}}>
+                {title}
+              </span>
+              }
             </Col>
-        </Row>
-    );
+          </Row>
+  );
 }
 ```  
-
-### ListItemController
-
-The ***ListItem*** component has a very simple controller that:
-* Retrieves the item properties
-* Allows the item to be selected or completed
-* Determines whether the current item is the one that is selected. 
-  
-It does this by interacting with the ***ListController***
-```javascript
-export class ListItemController {
-
-    constructor(listController : ListController, listItem : ToDoListItem) {
-        this.listController = listController;
-        this.listItem = listItem;
-    }
-
-    listController;
-    listItem;
-
-    get selected () {return !this.listItem.completed && 
-                            this.listController.isSelected(this.listItem);}
-    select () {this.listController.selectItem(this.listItem);}
-    unselect() {this.listController.selectItem(undefined);}
-
-    get title () {return this.listItem.title;}
-    setTitle (title : string) {this.listItem.title = title;}
-
-    get completed () {return this.listItem.completed}
-
-    toggleCompleted () {
-        this.listItem.completed = !this.listItem.completed;
-        this.listController.deleteNotificationController.todoCompletionChanged();
-    }
-}
-```
 
 ### Header
 
@@ -314,8 +298,7 @@ export function Header () {
     const {navbarBg} = styleController;
     const {addItem, invokeStyle, deleteNotificationController} = useContext(ListContext);
     const {undoCompletedItems, completedItems, showNotification, closeNotification} = deleteNotificationController;
-
-
+    
     return (
         <Navbar bg={navbarBg} variant={navbarBg as any} style={{height: 60}}>
             <Button variant={styleController.navbarButtonVariant} size="sm" onClick={addItem} className="mx-3"><Plus /></Button>
@@ -385,25 +368,34 @@ Proxily makes it easy to use Sagas and without having to use Redux itself. While
 ### Style Update Modal Dialog
 
 The ***StyleUpdate*** component manages the modal dialog which allows styles to be changed.  It shows a preview of the list and defers committing the style changes until the user presses the save button.  It also offers undo/redo as well as the ability to reset the style back to the state at the start of the dialog.
-```javascript
+
+The first step is to setup the list controllers.  There are actually two:
+* ***listController*** is the main list controller manages when to display the update modal dialog and so it is needed to be able to hide the dialog when complete.  It is simply retrieved from context.
+* ***sampleListController*** is for the sample todoList that appears in the dialog to preview the styles.  We create this one with ***useLocalObservable*** which will make a local instance of the listController for that purpose.  ***useLocalObservable*** ensures the object is created once when the component is mounted just like the callback in **useState***.
+
+```typescript jsx
 export function StyleUpdate () {
 
-    useObservables();
-    const [transaction] = useState( () => new Transaction({timePositioning: true}));
+  useObservables();
+
+  const listController = useContext(ListContext);
+  const {showStyle, hideStyle} = listController;
+  const sampleListController = useLocalObservable(() => new ListController(sampleToDoList))
+
+
+
 ```
-The first step is to create a Proxily **Transaction**.  We only want to do this once, so we use the callback form of the useState.  We specify **timePositioning: true** so that undo/redo events will be recorded.
-```javascript
+Then we create a Proxily **Transaction** with ***useTransaction***.  ***useTransaction*** will ensure only one transaction is created and that every render will have a reference to this transaction. We specify **timePositioning: true** so that undo/redo events will be recorded.
+
+We set up a ***StyleController*** for the modal dialog with **useTransactable** which will a new copy of the controller bound to the transaction.  Changes to this object (or any objects referenced from it) will not impact the original state. Thus changes made in this modal dialog will not yet impact the main list in the application.
+```typescript
+    const transaction = useTransaction({timePositioning: true});
     const styleController = useTransactable(useContext(StyleContext), transaction);
     const {backgroundStyle} = styleController;
+
 ```
-We set up a ***StyleController*** for the modal dialog.   **useTransactable** returns an object that has a new copy of the controller.  Changes to this object (or any objects referenced from it) will not impact the original state. Thus changes made in this modal dialog will not yet impact the main list in the application.  
+Event handlers for the main actions in the dialog are set up at this point.  The cancel will simply rollback the changes on the transaction which will update any transactable versions of data back to the original.  The save will commit changes in the transactable versions of the data back to this which copies the original. In both cases the modal dialog is dismissed.  Undo and redo buttons ask the transaction to undo or redo the latest state changes.
 ```javascript
-    const listController = useContext(ListContext);
-    const {showStyle, hideStyle} = listController
-```
-We need the original ***ListController*** in order to dismiss the modal dialog when the style update is complete.
-```javascript
-  // Actions
     const cancel = () => {
         transaction.rollback();
         listController.hideStyle();
@@ -415,54 +407,42 @@ We need the original ***ListController*** in order to dismiss the modal dialog w
     const undo = () => transaction.undo();
     const redo = () => transaction.redo();
 ```
-Event handlers for the main actions in the dialog are set up at this point.  The cancel will simply rollback the changes on the transaction which will update any transactable versions of data back to the original.  The save will commit changes in the transactable versions of the data back to this which copies the original. In both cases the modal dialog is dismissed.  Undo and redo buttons ask the transaction to undo or redo the latest state changes.
-
-The dialog has a "sample" todoList.  We will re-use the ***List*** component but need a sample todoList that we know will fit in the dialog and have a suitable number of entries, so we set that up as well.
-```javascript
-    // Sample Todo Items
-    const sampleToDoList = new ToDoList();
-    sampleToDoList.addItem("Item 1");
-    sampleToDoList.addItem("Item 2");
-    sampleToDoList.addItem("Item 3");
-```
 Now we are ready to return the JSX:
 ```javascript
     return (
         <Modal show={showStyle} onHide={hideStyle} size="xl">
 
-            <Modal.Header closeButton>
-                <Modal.Title>List Styles</Modal.Title>
-            </Modal.Header>
+          <Modal.Header closeButton>
+            <Modal.Title>List Styles</Modal.Title>
+          </Modal.Header>
 
-            <Modal.Body>
-                <StyleContext.Provider value={styleController}>
-                    <ObservableProvider context={ListContext}
-                                        value={() => new ListController(sampleToDoList)}
-                                        transaction={transaction}>
-                        <Row>
-                            <Col md={6} style={backgroundStyle}>
-                                <List />
-                            </Col>
-                            <Col md={6}>
-                                <StyleFields />
-                            </Col>
-                        </Row>
-                    </ObservableProvider>
-                </StyleContext.Provider>
-            </Modal.Body>
+          <Modal.Body>
+            <StyleContext.Provider value={styleController}>
+              <ListContext.Provider value={sampleListController}>
+                <Row>
+                  <Col md={6} style={backgroundStyle}>
+                    <List />
+                  </Col>
+                  <Col md={6}>
+                    <StyleFields />
+                  </Col>
+                </Row>
+              </ListContext.Provider>
+            </StyleContext.Provider>
+          </Modal.Body>
 
-            <Modal.Footer>
-                <Button variant="secondary" disabled={!transaction.canUndo} onClick={undo}><Undo /></Button>
-                <Button variant="secondary" disabled={!transaction.canRedo} onClick={redo}><Redo /></Button>
-                <Button variant="secondary" onClick={cancel}>Cancel</Button>
-                <Button variant="primary" onClick={save}>Save changes</Button>
-            </Modal.Footer>
+          <Modal.Footer>
+            <Button variant="secondary" disabled={!transaction.canUndo} onClick={undo}><Undo /></Button>
+            <Button variant="secondary" disabled={!transaction.canRedo} onClick={redo}><Redo /></Button>
+            <Button variant="secondary" onClick={cancel}>Cancel</Button>
+            <Button variant="primary" onClick={save}>Save changes</Button>
+          </Modal.Footer>
 
         </Modal>
-    );
+);
 }
 ```
-We set up the ***ListController*** and ***StyleController*** as contexts.  Since the ***StyleController*** has already been created, we use the normal context provider component.  We need to create the ***ListController*** based on ***sampleToDoList***, so we use **ObservableProvider** for that task.  The JSX establishes a left column that re-uses the ***List*** component (with the newly created ***ListController*** context), and a right column that can be used to change the style.  The buttons at the bottom simply invoke the actions we already set up.
+We set up the ***ListController*** and ***StyleController*** as contexts. The JSX establishes a left column that re-uses the ***List*** component (with the newly created ***ListController*** context), and a right column that can be used to change the style.  The buttons at the bottom simply invoke the actions we already set up.
 
 The updating of the fields in the ***StyleFields*** component is a very straightforward. It simply displays the current style attribute and allows it to be updated.
 ```
