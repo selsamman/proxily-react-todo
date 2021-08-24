@@ -32,10 +32,10 @@ export function ListItem ({item} : {item : ToDoListItem}) {
             <Col>
                 {isSelected &&
                     <form onSubmit={unselect}>
-                    <input type="text" autoFocus={true} style={inputStyle}
-                           onChange={ (e) => setTitle(e.target.value) }
-                           value={title} />
-                    </form>
+                        <input type="text" autoFocus={true} style={inputStyle}
+                               onChange={ (e) => setTitle(e.target.value) }
+                               value={title} />
+                        </form>
                 }
                 {!isSelected &&
                     <span style={{textDecoration: completed ? "line-through" : ""}}>

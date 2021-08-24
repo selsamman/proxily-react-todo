@@ -97,8 +97,9 @@ export {TodoListStyle} from "./TodoListStyle";
 
 In order to consume our persistent state in our application we instantiate the classes and persist them to local storage.
 ```javascript
-const toDoList = persist(new ToDoList(), {key: 'root', classes: Object.values(require('./store'))});
-const toDoListStyle = persist(new TodoListStyle(), {key: 'style', classes: Object.values(require('./store'))});
+const classes = Object.values(require('./store'));
+const toDoList = persist(new ToDoList(), {key: 'root', classes});
+const toDoListStyle = persist(new TodoListStyle(), {key: 'style', classes});
 ```
 We chose to keep them in separate keys under local storage, each identified by a **key**. In order for persist to serialize and deserialize them it needs a list of the classes.   Since we exported them all in index.tsx, we need only get the values from that file by requiring it and taking the properties as an Array.
 
