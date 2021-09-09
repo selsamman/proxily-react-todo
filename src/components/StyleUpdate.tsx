@@ -2,12 +2,18 @@ import {Button, Col, Form, ListGroup, Modal, Row} from "react-bootstrap";
 import React, {useContext, useState} from "react";
 import {StyleContext} from "../controllers/StyleController";
 import {ListContext, ListController} from "../controllers/ListController";
-import {List} from "./List";
-import {useObservableProp, useObservables, useTransaction, useTransactable, useLocalObservable} from "proxily";
+import List from "./List";
+import {
+    useObservableProp,
+    useTransaction,
+    useTransactable,
+    useLocalObservable,
+    observer
+} from "proxily";
 import {ToDoList} from "../store";
 import { HexColorPicker } from "react-colorful";
 import {Undo, Redo} from '@material-ui/icons';
-import {Header} from "./Header";
+import Header from "./Header";
 
 // Sample Todo Items
 const sampleToDoList = new ToDoList();
@@ -16,9 +22,7 @@ sampleToDoList.addItem("Item 2");
 sampleToDoList.addItem("Item 3");
 
 
-export function StyleUpdate () {
-
-    useObservables();
+function StyleUpdate () {
 
     const listController = useContext(ListContext);
     const {showStyle, hideStyle} = listController;
@@ -40,8 +44,6 @@ export function StyleUpdate () {
     }
     const undo = () => transaction.undo();
     const redo = () => transaction.redo();
-
-
 
     return (
         <Modal show={showStyle} onHide={hideStyle} size="xl">
@@ -76,10 +78,10 @@ export function StyleUpdate () {
         </Modal>
     );
 }
+export default observer(StyleUpdate);
 
-export function StyleFields () {
+const StyleFields = observer(function StyleFields () {
 
-    useObservables();
     const toDoListStyle = useContext(StyleContext).todoListStyle;
     const [backgroundColor, setBackgroundColor] = useObservableProp(toDoListStyle.backgroundColor);
     const [listFontColor, setListFontColor] = useObservableProp(toDoListStyle.listFontColor);
@@ -120,10 +122,10 @@ export function StyleFields () {
             </Form.Group>
         </>
     );
-}
+})
 
 // Choose from a selection and invoke a setter
-function Selector ({prop, setter, choices} :
+const Selector = observer(function Selector ({prop, setter, choices} :
          {prop : string | number, setter : (choice: any) => void, choices : Array<number | string>}) : any {
     return (
         <ListGroup variant="flush">
@@ -135,4 +137,4 @@ function Selector ({prop, setter, choices} :
             )}
         </ListGroup>
     )
-}
+});

@@ -1,12 +1,11 @@
 import {Navbar, Button, Nav} from "react-bootstrap";
 import {ListContext} from "../controllers/ListController";
-import {useObservables} from "proxily";
+import {observer} from "proxily";
 import {useContext} from "react";
 import {StyleContext} from "../controllers/StyleController";
 import {Gear, Plus} from "react-bootstrap-icons";
 
-export function Header () {
-    useObservables();
+function Header () {
     const styleController = useContext(StyleContext);
     const {navbarBg} = styleController;
     const {addItem, invokeStyle, deleteNotificationController} = useContext(ListContext);
@@ -28,3 +27,4 @@ export function Header () {
         </Navbar>
     );
 }
+export default observer(Header);

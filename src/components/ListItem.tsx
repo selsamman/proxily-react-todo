@@ -1,13 +1,11 @@
-import {useObservableProp, useObservables} from "proxily";
+import {observer, useObservableProp} from "proxily";
 import {Col, Row} from "react-bootstrap";
 import {useContext} from "react";
 import {StyleContext} from "../controllers/StyleController";
 import {ToDoListItem} from "../store";
 import {ListContext} from "../controllers/ListController";
 
-export function ListItem ({item} : {item : ToDoListItem}) {
-
-    useObservables();
+function ListItem ({item} : {item : ToDoListItem}) {
 
     const listController = useContext(ListContext);
     const isSelected = listController.isSelected(item);
@@ -46,5 +44,6 @@ export function ListItem ({item} : {item : ToDoListItem}) {
         </Row>
     );
 }
+export default observer(ListItem);
 
 

@@ -1,13 +1,11 @@
-import {useObservables} from "proxily";
+import {observer} from "proxily";
 import {Card, ListGroup} from "react-bootstrap";
-import {ListItem} from "./ListItem";
+import ListItem from "./ListItem";
 import {useContext} from "react";
 import {ListContext} from "../controllers/ListController";
 import {StyleContext} from "../controllers/StyleController";
 
-export function List () {
-
-    useObservables()
+function List () {
 
     const listController = useContext(ListContext);
     const {items} = listController;
@@ -25,3 +23,4 @@ export function List () {
         </Card>
    );
 }
+export default observer(List);
