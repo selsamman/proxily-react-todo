@@ -115,14 +115,13 @@ This allows the components themselves to act purely as a view and as such are ve
   
 Given their role in presenting state to view components, we will pass the persistent state to our components by way of the controllers which we create in ***App.tsx***
 ```javascript
-const styleController = makeObservable(new StyleController(toDoListStyle));
-const listController = makeObservable(new ListController(toDoList));
+const styleController = observable(new StyleController(toDoListStyle));
+const listController = observable(new ListController(toDoList));
 ```
-After creating them, we must make them observable using **makeObservable** such that any components that reference them will react to state changes. We then pass them to our components using React context providers:
+After creating them, we must make them observable by wrapping it in **observer** such that any components that reference them will react to state changes. We then pass them to our components using React context providers:
 ```typescript jsx
 function App() {
 
-  useObservables();
   const {backgroundStyle} = styleController;
   const {showStyle} = listController;
 
@@ -140,6 +139,7 @@ function App() {
     </StyleContext.Provider>
   );
 }
+export default observer(App);
 ```
 The main jsx is doing the following:
 * Setting up the context with the controllers that will be needed
@@ -149,7 +149,7 @@ The main jsx is doing the following:
     * ***List*** which displays the list itself
     * ***StyleUpdate*** which is a modal dialog which will appear when the setting button is pressed
     
-Note the **useObservables** which is the counter-part to **makeObservable**.  Using these together will track usage of the state and re-render the component when state changes.
+Note **observer** which is the counter-part to **observable**.  Using these together will track usage of the state and re-render the component when state changes.
 
 ### List.tsx
 
@@ -449,11 +449,11 @@ export function StyleFields () {
 
     useObservables();
     const toDoListStyle = useContext(StyleContext).todoListStyle;
-    const [backgroundColor, setBackgroundColor] = useObservable(toDoListStyle.backgroundColor);
-    const [listFontColor, setListFontColor] = useObservable(toDoListStyle.listFontColor);
-    const [listItemBackgroundColor, setListItemBackgroundColor] = useObservable(toDoListStyle.listItemBackgroundColor);
-    const [fontSize, setFontSize] = useObservable(toDoListStyle.fontSize);
-    const [navbarBg, setNavbarBg] = useObservable(toDoListStyle.navbarBg);
+    const [backgroundColor, setBackgroundColor] = useObservableProp(toDoListStyle.backgroundColor);
+    const [listFontColor, setListFontColor] = useObservableProp(toDoListStyle.listFontColor);
+    const [listItemBackgroundColor, setListItemBackgroundColor] = useObservableProp(toDoListStyle.listItemBackgroundColor);
+    const [fontSize, setFontSize] = useObservableProp(toDoListStyle.fontSize);
+    const [navbarBg, setNavbarBg] = useObservableProp(toDoListStyle.navbarBg);
     const [activeProp, setActiveProp] = useState('');
 
     return (
@@ -490,7 +490,7 @@ export function StyleFields () {
     );
 }
 ```
-In order to simplify the getting and setting of each style property **useObservable** is used to create a "getter", and a "setter" function for each property.  This helper will take the last property referenced, e.g., the one passed as an argument, and automatically create a function that will set its value.  This avoids having to create numerous setters or having to modify the state directly in the component code.  The ***activeProp*** just selects the current form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
+In order to simplify the getting and setting of each style property **useObservableProp** is used to create a "getter", and a "setter" function for each property.  This helper will take the last property referenced, e.g., the one passed as an argument, and automatically create a function that will set its value.  This avoids having to create numerous setters or having to modify the state directly in the component code.  The ***activeProp*** just selects the current form group and expands the details.  Here useState is perfectly appropriate since this is only needed locally.
 
 
 
