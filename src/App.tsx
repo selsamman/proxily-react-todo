@@ -10,9 +10,9 @@ import {StyleContext, StyleController} from "./controllers/StyleController";
 import StyleUpdate from "./components/StyleUpdate";
 
 configureReduxDevTools();
-const classes = Object.values(require('./store'));
-const toDoList = persist(new ToDoList(), {key: 'root', classes});
-const toDoListStyle = persist(new TodoListStyle(), {key: 'style', classes});
+
+const toDoList = persist(new ToDoList(), {key: 'root'});
+const toDoListStyle = persist(new TodoListStyle(), {key: 'style'});
 //const toDoList = makeObservable(new ToDoList());
 //const toDoListStyle = makeObservable(new TodoListStyle());
 const styleController = observable(new StyleController(toDoListStyle));

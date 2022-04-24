@@ -1,3 +1,5 @@
+import {serializable} from "proxily";
+
 export class TodoListStyle {
     navbarBg = "dark";
     fontSize = 16
@@ -5,3 +7,4 @@ export class TodoListStyle {
     backgroundColor = "#ffffff";
     listFontColor = "#707070";
 }
+serializable({TodoListStyle});

@@ -1,9 +1,7 @@
 cd ../proxily
 yarn build
-rm -rf node_modules
 cd ../todo_web
-yarn upgrade proxily
-cd ../proxily
-yarn install
-cd ../todo_web
-yarn start
+rm -rf ./node_modules/proxily/lib
+ls -l ./node_modules/proxily
+cp -r ../proxily/lib ./node_modules/proxily
+ls -l ./node_modules/proxily

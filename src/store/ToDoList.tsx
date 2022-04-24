@@ -1,4 +1,5 @@
 import {ToDoListItem} from "./ToDoListItem";
+import {serializable} from "proxily";
 
 export class ToDoList {
 
@@ -16,3 +17,4 @@ export class ToDoList {
     }
 
 }
+serializable({ToDoList});
